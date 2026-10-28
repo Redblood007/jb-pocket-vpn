@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { listPublicPlans } from "@/lib/admin-server";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,14 +14,14 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(plansQuery),
   component: Index,
 });
 
-const plans = [
-  { name: "Basic", price: 99, devices: 1, features: ["1 device", "20+ countries", "Unlimited data", "No-logs policy"] },
-  { name: "Pro", price: 199, devices: 5, popular: true, features: ["5 devices", "60+ countries", "Unlimited data & speed", "Ad & malware blocker", "Streaming servers"] },
-  { name: "Family", price: 349, devices: 10, features: ["10 devices", "60+ countries", "Everything in Pro", "Dedicated IP", "24/7 priority support"] },
-];
+const plansQuery = queryOptions({
+  queryKey: ["plans"],
+  queryFn: () => listPublicPlans(),
+});
 
 const features = [
   ["⚡", "Super fast", "10 Gbps servers, no speed limit."],
@@ -38,6 +40,7 @@ const faqs = [
 
 function Index() {
   const [open, setOpen] = useState<number | null>(0);
+  const { data: plans } = useSuspenseQuery(plansQuery);
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
