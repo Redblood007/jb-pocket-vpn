@@ -26,8 +26,6 @@ export const listPublicPlans = createServerFn({ method: "GET" }).handler(async (
   return data;
 });
 
-type AdminContext = { supabase: Database; userId: string } & Record<string, unknown>;
-
 async function assertAdmin(supabase: any, userId: string) {
   const { data } = await supabase
     .from("user_roles")
