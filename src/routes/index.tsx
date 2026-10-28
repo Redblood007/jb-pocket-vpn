@@ -23,6 +23,13 @@ const plansQuery = queryOptions({
   queryFn: () => listPublicPlans(),
 });
 
+const WHATSAPP_NUMBER = "917006269882";
+
+function whatsappLink(planName: string, price: number) {
+  const text = `Namaste, mujhe ${planName} plan (₹${price}/mahina) chahiye.`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}
+
 const features = [
   ["⚡", "Super fast", "10 Gbps servers, no speed limit."],
   ["🔒", "Military-grade encryption", "AES-256 + WireGuard protocol."],
@@ -100,9 +107,14 @@ function Index() {
               <ul className="mt-6 space-y-3 text-sm">
                 {((p.features as string[]) ?? []).map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
               </ul>
-              <button className={`mt-8 w-full rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}>
-                Choose {p.name}
-              </button>
+              <a
+                href={whatsappLink(p.name, p.price_inr)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}
+              >
+                <span>💬</span> WhatsApp par order karo
+              </a>
             </div>
           ))}
         </div>
