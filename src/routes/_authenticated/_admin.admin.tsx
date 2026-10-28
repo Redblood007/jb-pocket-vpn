@@ -52,32 +52,32 @@ function AdminPage() {
   const addCustomer = useMutation({
     mutationFn: useServerFn(createCustomer),
     onSuccess: () => {
-      toast.success("Customer add ho gaya");
+      toast.success("Customer added");
       refresh();
     },
-    onError: (e) => toast.error("Customer add nahi hua: " + e.message),
+    onError: (e) => toast.error("Could not add customer: " + e.message),
   });
   const removeCustomer = useMutation({
     mutationFn: useServerFn(deleteCustomer),
     onSuccess: () => {
-      toast.success("Customer delete ho gaya");
+      toast.success("Customer deleted");
       refresh();
     },
-    onError: (e) => toast.error("Delete nahi hua: " + e.message),
+    onError: (e) => toast.error("Delete failed: " + e.message),
   });
   const toggleActive = useMutation({
     mutationFn: useServerFn(setCustomerActive),
     onSuccess: () => refresh(),
-    onError: (e) => toast.error("Update nahi hua: " + e.message),
+    onError: (e) => toast.error("Update failed: " + e.message),
   });
   const savePlan = useMutation({
     mutationFn: useServerFn(updatePlan),
     onSuccess: () => {
-      toast.success("Plan save ho gaya — website par bhi update dikhega");
+      toast.success("Plan saved — the website will update too");
       refresh();
       refreshPublicPlans();
     },
-    onError: (e) => toast.error("Save nahi hua: " + e.message),
+    onError: (e) => toast.error("Save failed: " + e.message),
   });
 
   const plans = data?.plans ?? [];
