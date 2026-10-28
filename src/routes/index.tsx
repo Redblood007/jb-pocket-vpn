@@ -26,7 +26,7 @@ const plansQuery = queryOptions({
 const WHATSAPP_NUMBER = "917006269882";
 
 function whatsappLink(planName: string, price: number) {
-  const text = `Namaste, mujhe ${planName} plan (₹${price}/mahina) chahiye.`;
+  const text = `Hi, I want the ${planName} plan (₹${price}/month).`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 
@@ -63,13 +63,13 @@ function Index() {
       <section className="bg-glow px-6 pb-24 pt-20 text-center">
         <p className="mx-auto mb-6 w-fit rounded-full border border-border px-4 py-1 text-xs text-primary">● 1M+ users protected</p>
         <h1 className="mx-auto max-w-3xl font-display text-5xl font-bold leading-tight md:text-7xl">
-          Internet ko <span className="text-primary">safe</span> aur <span className="text-accent">fast</span> banao
+          Make your internet <span className="text-primary">safe</span> and <span className="text-accent">fast</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-          Best VPN Pro — sabse sasta monthly plan, sirf ₹99 se shuru. Koi contract nahi.
+          Best VPN Pro — affordable monthly plans, starting at just ₹99. No contract.
         </p>
         <div className="mt-10 flex justify-center gap-4">
-          <a href="#pricing" className="rounded-full bg-primary px-8 py-4 font-bold text-primary-foreground shadow-glow transition hover:scale-105">Plans dekho</a>
+          <a href="#pricing" className="rounded-full bg-primary px-8 py-4 font-bold text-primary-foreground shadow-glow transition hover:scale-105">See Plans</a>
           <a href="#features" className="rounded-full border border-border px-8 py-4 font-medium hover:bg-secondary">Features</a>
         </div>
         <div className="mx-auto mt-16 grid max-w-3xl grid-cols-3 gap-6">
@@ -80,7 +80,7 @@ function Index() {
       </section>
 
       <section id="features" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center font-display text-4xl font-bold">Kyun ShieldX Pro?</h2>
+        <h2 className="text-center font-display text-4xl font-bold">Why ShieldX Pro?</h2>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map(([i, t, d]) => (
             <div key={t} className="rounded-2xl border border-border bg-card p-6">
@@ -113,7 +113,7 @@ function Index() {
                 rel="noopener noreferrer"
                 className={`mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}
               >
-                <span>💬</span> WhatsApp par order karo
+                <span>💬</span> Order on WhatsApp
               </a>
             </div>
           ))}
