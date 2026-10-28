@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { listPublicPlans } from "@/lib/admin-server";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,14 +14,14 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(plansQuery),
   component: Index,
 });
 
-const plans = [
-  { name: "Basic", price: 99, devices: 1, features: ["1 device", "20+ countries", "Unlimited data", "No-logs policy"] },
-  { name: "Pro", price: 199, devices: 5, popular: true, features: ["5 devices", "60+ countries", "Unlimited data & speed", "Ad & malware blocker", "Streaming servers"] },
-  { name: "Family", price: 349, devices: 10, features: ["10 devices", "60+ countries", "Everything in Pro", "Dedicated IP", "24/7 priority support"] },
-];
+const plansQuery = queryOptions({
+  queryKey: ["plans"],
+  queryFn: () => listPublicPlans(),
+});
 
 const features = [
   ["⚡", "Super fast", "10 Gbps servers, no speed limit."],
@@ -38,6 +40,7 @@ const faqs = [
 
 function Index() {
   const [open, setOpen] = useState<number | null>(0);
+  const { data: plans } = useSuspenseQuery(plansQuery);
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
@@ -87,15 +90,15 @@ function Index() {
         <p className="mt-3 text-center text-muted-foreground">Best rate, cancel anytime. 7-day money-back guarantee.</p>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {plans.map((p) => (
-            <div key={p.name} className={`relative rounded-3xl border p-8 ${p.popular ? "border-primary bg-card shadow-glow" : "border-border bg-card"}`}>
+            <div key={p.id} className={`relative rounded-3xl border p-8 ${p.popular ? "border-primary bg-card shadow-glow" : "border-border bg-card"}`}>
               {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">MOST POPULAR</span>}
               <h3 className="font-display text-xl font-bold">{p.name}</h3>
               <div className="mt-4 flex items-end gap-1">
-                <span className="font-display text-5xl font-bold">₹{p.price}</span>
+                <span className="font-display text-5xl font-bold">₹{p.price_inr}</span>
                 <span className="mb-2 text-muted-foreground">/month</span>
               </div>
               <ul className="mt-6 space-y-3 text-sm">
-                {p.features.map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
+                {((p.features as string[]) ?? []).map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
               </ul>
               <button className={`mt-8 w-full rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}>
                 Choose {p.name}
@@ -120,7 +123,7 @@ function Index() {
       </section>
 
       <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
-        © 2026 ShieldX VPN Pro. All rights reserved.
+        © 2026 ShieldX VPN Pro. All rights reserved. · <Link to="/admin-login" className="hover:text-foreground">Admin</Link>
       </footer>
     </div>
   );
