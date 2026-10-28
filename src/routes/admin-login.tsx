@@ -30,7 +30,7 @@ function AdminLogin() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
-      setError("Email ya password galat hai. Dubara try karein.");
+      setError("Wrong email or password. Please try again.");
       return;
     }
     navigate({ to: "/admin" });
@@ -42,7 +42,7 @@ function AdminLogin() {
         <div className="text-center">
           <span className="font-display text-xl font-bold">🛡️ ShieldX <span className="text-primary">Pro</span></span>
           <h1 className="mt-4 font-display text-2xl font-bold">Admin Login</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Sirf site ke malik ke liye.</p>
+          <p className="mt-2 text-sm text-muted-foreground">For the site owner only.</p>
         </div>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
@@ -75,7 +75,7 @@ function AdminLogin() {
             disabled={busy}
             className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
           >
-            {busy ? "Login ho raha hai..." : "Login"}
+            {busy ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>
