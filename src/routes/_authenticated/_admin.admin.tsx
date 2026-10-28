@@ -159,20 +159,20 @@ function CustomersTab({
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Customers</h1>
         <button onClick={() => setOpen(true)} className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground hover:opacity-90">
-          + Naya customer
+          + New customer
         </button>
       </div>
 
       {customers.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
-          Abhi koi customer nahi. "Naya customer" button se pehla customer add karein.
+          No customers yet. Use the "New customer" button to add your first one.
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="px-4 py-3 font-medium">Naam</th>
+                <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Phone</th>
                 <th className="px-4 py-3 font-medium">Plan</th>
                 <th className="px-4 py-3 font-medium">VPN login</th>
@@ -200,7 +200,7 @@ function CustomersTab({
                   <td className="px-4 py-3 text-right">
                     {confirmDelete === c.id ? (
                       <span className="flex justify-end gap-2">
-                        <button onClick={() => { onDelete(c.id); setConfirmDelete(null); }} className="rounded-full bg-destructive px-3 py-1 text-xs font-bold text-white">Haan, delete</button>
+                        <button onClick={() => { onDelete(c.id); setConfirmDelete(null); }} className="rounded-full bg-destructive px-3 py-1 text-xs font-bold text-white">Yes, delete</button>
                         <button onClick={() => setConfirmDelete(null)} className="rounded-full border border-border px-3 py-1 text-xs">Cancel</button>
                       </span>
                     ) : (
@@ -217,9 +217,9 @@ function CustomersTab({
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" onClick={() => setOpen(false)}>
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-display text-xl font-bold">Naya customer</h2>
+            <h2 className="font-display text-xl font-bold">New customer</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Field label="Naam *" value={form.name} onChange={set("name")} required />
+              <Field label="Name *" value={form.name} onChange={set("name")} required />
               <Field label="Phone" value={form.phone} onChange={set("phone")} />
               <Field label="Email" value={form.email} onChange={set("email")} type="email" />
               <div>
@@ -240,7 +240,7 @@ function CustomersTab({
               <button onClick={() => setOpen(false)} className="rounded-full border border-border px-5 py-2 text-sm font-medium hover:bg-secondary">Cancel</button>
               <button
                 onClick={() => {
-                  if (!form.name.trim()) { toast.error("Naam likhna zaroori hai"); return; }
+                  if (!form.name.trim()) { toast.error("Name is required"); return; }
                   onAdd({ ...form, name: form.name.trim() });
                   setForm({ name: "", phone: "", email: "", plan_id: "", vpn_username: "", vpn_password: "", started_on: "", notes: "" });
                   setOpen(false);
@@ -270,7 +270,7 @@ function PlansTab({ plans, onSave }: { plans: Plan[]; onSave: (p: { id: string; 
   return (
     <div>
       <h1 className="mb-6 font-display text-2xl font-bold">Plans</h1>
-      <p className="mb-6 text-sm text-muted-foreground">Yahan change karo — website ke "Monthly Plans" section mein turant update dikh jayega.</p>
+      <p className="mb-6 text-sm text-muted-foreground">Make changes here — the website's "Monthly Plans" section updates instantly.</p>
       <div className="grid gap-6 md:grid-cols-3">
         {plans.map((p) => (
           <PlanCard key={p.id} plan={p} onSave={onSave} />
@@ -291,7 +291,7 @@ function PlanCard({ plan, onSave }: { plan: Plan; onSave: (p: { id: string; name
     <div className={`rounded-3xl border p-6 ${plan.popular ? "border-primary bg-card shadow-glow" : "border-border bg-card"}`}>
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-sm font-medium">Naam</label>
+          <label className="mb-1 block text-sm font-medium">Name</label>
           <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -306,10 +306,10 @@ function PlanCard({ plan, onSave }: { plan: Plan; onSave: (p: { id: string; name
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={popular} onChange={(e) => setPopular(e.target.checked)} className="accent-primary" />
-          "Most Popular" badge dikhao
+          Show "Most Popular" badge
         </label>
         <div>
-          <label className="mb-1 block text-sm font-medium">Features (ek line mein ek)</label>
+          <label className="mb-1 block text-sm font-medium">Features (one per line)</label>
           <textarea rows={5} value={features} onChange={(e) => setFeatures(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
         </div>
       </div>
@@ -317,7 +317,7 @@ function PlanCard({ plan, onSave }: { plan: Plan; onSave: (p: { id: string; name
         onClick={() => {
           const priceNum = Number(price);
           const devNum = Number(devices);
-          if (!name.trim() || !Number.isFinite(priceNum) || priceNum < 0) { toast.error("Naam aur price sahi likhein"); return; }
+          if (!name.trim() || !Number.isFinite(priceNum) || priceNum < 0) { toast.error("Enter a valid name and price"); return; }
           onSave({
             id: plan.id,
             name: name.trim(),
@@ -329,7 +329,7 @@ function PlanCard({ plan, onSave }: { plan: Plan; onSave: (p: { id: string; name
         }}
         className="mt-4 w-full rounded-full bg-primary py-2 text-sm font-bold text-primary-foreground hover:opacity-90"
       >
-        Save karo
+        Save
       </button>
     </div>
   );
@@ -346,10 +346,10 @@ function ChangePasswordCard() {
     const { error } = await supabase.auth.updateUser({ password: next, current_password: current });
     setBusy(false);
     if (error) {
-      toast.error("Password badal nahi paya: " + error.message);
+      toast.error("Could not change password: " + error.message);
       return;
     }
-    toast.success("Password badal gaya");
+    toast.success("Password changed");
     setOpen(false);
     setCurrent("");
     setNext("");
@@ -357,19 +357,19 @@ function ChangePasswordCard() {
 
   return (
     <div className="mt-10 rounded-2xl border border-border bg-card p-6">
-      <h2 className="font-display text-lg font-bold">Apna admin password</h2>
+      <h2 className="font-display text-lg font-bold">Admin password</h2>
       {open ? (
         <div className="mt-4 max-w-sm space-y-3">
           <input type="password" placeholder="Current password" value={current} onChange={(e) => setCurrent(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
-          <input type="password" placeholder="Naya password (kam se kam 8)" value={next} onChange={(e) => setNext(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+          <input type="password" placeholder="New password (min 8 chars)" value={next} onChange={(e) => setNext(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
           <div className="flex gap-3">
-            <button onClick={handleChange} disabled={busy || next.length < 8} className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50">Badal do</button>
+            <button onClick={handleChange} disabled={busy || next.length < 8} className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50">Change</button>
             <button onClick={() => setOpen(false)} className="rounded-full border border-border px-5 py-2 text-sm hover:bg-secondary">Cancel</button>
           </div>
         </div>
       ) : (
         <button onClick={() => setOpen(true)} className="mt-3 rounded-full border border-border px-5 py-2 text-sm font-medium hover:bg-secondary">
-          Password badlein
+          Change password
         </button>
       )}
     </div>
