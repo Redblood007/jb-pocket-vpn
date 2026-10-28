@@ -90,15 +90,15 @@ function Index() {
         <p className="mt-3 text-center text-muted-foreground">Best rate, cancel anytime. 7-day money-back guarantee.</p>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {plans.map((p) => (
-            <div key={p.name} className={`relative rounded-3xl border p-8 ${p.popular ? "border-primary bg-card shadow-glow" : "border-border bg-card"}`}>
+            <div key={p.id} className={`relative rounded-3xl border p-8 ${p.popular ? "border-primary bg-card shadow-glow" : "border-border bg-card"}`}>
               {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">MOST POPULAR</span>}
               <h3 className="font-display text-xl font-bold">{p.name}</h3>
               <div className="mt-4 flex items-end gap-1">
-                <span className="font-display text-5xl font-bold">₹{p.price}</span>
+                <span className="font-display text-5xl font-bold">₹{p.price_inr}</span>
                 <span className="mb-2 text-muted-foreground">/month</span>
               </div>
               <ul className="mt-6 space-y-3 text-sm">
-                {p.features.map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
+                {((p.features as string[]) ?? []).map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
               </ul>
               <button className={`mt-8 w-full rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}>
                 Choose {p.name}
@@ -123,7 +123,7 @@ function Index() {
       </section>
 
       <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
-        © 2026 ShieldX VPN Pro. All rights reserved.
+        © 2026 ShieldX VPN Pro. All rights reserved. · <Link to="/admin-login" className="hover:text-foreground">Admin</Link>
       </footer>
     </div>
   );
