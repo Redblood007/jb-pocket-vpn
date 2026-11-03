@@ -1,6 +1,7 @@
 package com.redblood.pocketvpn
 
 import android.net.VpnService
+import android.os.ParcelFileDescriptor
 
 class PocketVpnService : VpnService() {
     private var iface: ParcelFileDescriptor? = null
