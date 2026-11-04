@@ -1,5 +1,11 @@
 plugins { id("com.android.application") }
 
+val releaseStoreFile = System.getenv("VPN_RELEASE_STORE_FILE")
+val releaseStorePassword = System.getenv("VPN_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = System.getenv("VPN_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = System.getenv("VPN_RELEASE_KEY_PASSWORD")
+val releaseSigningReady = listOf(releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.jbpocketvpn"
     compileSdk = 35
@@ -10,6 +16,24 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
+    }
+
+    if (releaseSigningReady) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            if (releaseSigningReady) signingConfig = signingConfigs.getByName("release")
+        }
     }
 
     compileOptions {
