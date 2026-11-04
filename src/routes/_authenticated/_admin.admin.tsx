@@ -12,6 +12,7 @@ import {
   deleteCustomer,
   setCustomerActive,
   updatePlan,
+  setPaymentOrderStatus,
   type Plan,
 } from "@/lib/admin-server";
 
@@ -51,18 +52,12 @@ function AdminPage() {
 
   const addCustomer = useMutation({
     mutationFn: useServerFn(createCustomer),
-    onSuccess: () => {
-      toast.success("Customer added");
-      refresh();
-    },
+    onSuccess: () => { toast.success("Customer added"); refresh(); },
     onError: (e) => toast.error("Could not add customer: " + e.message),
   });
   const removeCustomer = useMutation({
     mutationFn: useServerFn(deleteCustomer),
-    onSuccess: () => {
-      toast.success("Customer deleted");
-      refresh();
-    },
+    onSuccess: () => { toast.success("Customer deleted"); refresh(); },
     onError: (e) => toast.error("Delete failed: " + e.message),
   });
   const toggleActive = useMutation({
@@ -70,7 +65,12 @@ function AdminPage() {
     onSuccess: () => refresh(),
     onError: (e) => toast.error("Update failed: " + e.message),
   });
-  const reviewPayment = useMutation({\n    mutationFn: useServerFn(setPaymentOrderStatus),\n    onSuccess: () => { toast.success("Payment status updated"); refresh(); },\n    onError: (e) => toast.error("Payment update failed: " + e.message),\n  });\n  const savePlan = useMutation({
+  const reviewPayment = useMutation({
+    mutationFn: useServerFn(setPaymentOrderStatus),
+    onSuccess: () => { toast.success("Payment status updated"); refresh(); },
+    onError: (e) => toast.error("Payment update failed: " + e.message),
+  });
+  const savePlan = useMutation({
     mutationFn: useServerFn(updatePlan),
     onSuccess: () => {
       toast.success("Plan saved — the website will update too");
@@ -81,7 +81,8 @@ function AdminPage() {
   });
 
   const plans = data?.plans ?? [];
-  const customers = data?.customers ?? [];\n  const payments = data?.payments ?? [];
+  const customers = data?.customers ?? [];
+  const payments = data?.payments ?? [];
   const planById = new Map<string, Plan>(plans.map((p) => [p.id, p]));
 
   if (isLoading) {
@@ -104,6 +105,9 @@ function AdminPage() {
             <button onClick={() => setTab("plans")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "plans" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
               Plans
             </button>
+            <button onClick={() => setTab("payments")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "payments" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
+              Payments ({payments.length})
+            </button>
             <button onClick={handleSignOut} className="rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-secondary">
               Logout
             </button>
@@ -121,8 +125,10 @@ function AdminPage() {
             onDelete={(id) => removeCustomer.mutate({ data: { id } })}
             onToggle={(id, active) => toggleActive.mutate({ data: { id, active } })}
           />
-        ) : (
+        ) : tab === "plans" ? (
           <PlansTab plans={plans} onSave={(p) => savePlan.mutate({ data: p })} />
+        ) : (
+          <PaymentsTab payments={payments} onReview={(id, status) => reviewPayment.mutate({ data: { id, status } })} />
         )}
         <ChangePasswordCard />
       </main>
