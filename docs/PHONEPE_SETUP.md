@@ -23,7 +23,7 @@ PhonePe credentials are issued in the PhonePe PG Business Dashboard. Start with 
 
 1. Apply Drizzle migrations in order, including 0001_billing_subscriptions.sql and 0002_phonepe_checkout.sql, to the linked Supabase database.
 2. Deploy functions: create-phonepe-order, phonepe-webhook, phonepe-payment-status.
-3. Configure PhonePe Developer Settings > Webhook using **SHA** authentication. Use the exact username/password configured above. Subscribe to checkout.order.completed, checkout.order.failed and pg.refund.completed.
+3. Configure PhonePe Developer Settings > Webhook using **SHA** authentication. Use the exact username/password configured above. Subscribe only to checkout.order.completed and checkout.order.failed. Refund-driven subscription revocation is not implemented yet; do not enable refund callbacks as an access-revocation workflow.
 4. Set webhook URL to https://PROJECT_REF.supabase.co/functions/v1/phonepe-webhook.
 5. Enable authenticated function calls for create-phonepe-order and phonepe-payment-status. The webhook function must be publicly reachable but protected by PhonePe SHA authentication.
 6. Configure PHONEPE_ENV=sandbox and run UAT: successful, failed, pending, wrong amount, duplicate webhook and refund cases. Only after UAT sign-off switch to production credentials/environment.
