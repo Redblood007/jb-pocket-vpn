@@ -19,7 +19,7 @@ function CustomerLogin() {
 
   async function saveProfile(user: { id: string; email?: string; user_metadata?: Record<string, unknown> }) {
     const displayName = name.trim() || String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Customer");
-    const { error: profileError } = await supabase.from("customer_profiles" as any).upsert(
+    const { error: profileError } = await supabase.from("customer_profiles").upsert(
       { user_id: user.id, name: displayName, email: user.email ?? email },
       { onConflict: "user_id" },
     );
@@ -38,7 +38,7 @@ function CustomerLogin() {
           password,
           options: {
             data: { full_name: name.trim() },
-            emailRedirectTo: window.location.origin + "/account",
+            emailRedirectTo: globalThis.location.origin + "/account",
           },
         });
         if (authError) throw authError;
