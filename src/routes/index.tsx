@@ -54,7 +54,7 @@ function Index() {
       if (!sessionData.session?.access_token) { setPaymentMessage("Please sign in before purchasing."); return; }
       const { data, error } = await supabase.functions.invoke("create-manual-upi-order", { body: { planId: plan.id } });
       if (error) throw error;
-      setOrder(data); window.location.href = data.upiUri;
+      setOrder(data);
     } catch (e) { setPaymentMessage(e instanceof Error ? e.message : "Could not create UPI order."); }
     finally { setBusy(false); }
   }
@@ -144,7 +144,7 @@ function Index() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
             <div className="flex justify-between"><h2 className="text-xl font-bold">UPI payment · {selectedPlan.name}</h2><button onClick={() => { setSelectedPlan(null); setOrder(null); }} type="button">Close</button></div>
-            {order && <div className="mt-4 rounded-xl bg-secondary p-4 text-sm"><p>Payee: Javaid Beigh</p><p>UPI ID: javaidbeigh121@okaxis</p><p>Amount: ₹{order.amountInr}</p><p>Order: {order.orderReference}</p><a className="mt-3 inline-block rounded-full bg-primary px-4 py-2 text-primary-foreground" href={order.upiUri}>Open UPI app</a></div>}
+            {order && <div className="mt-4 rounded-xl bg-secondary p-4 text-sm"><p>Payee: {order.payeeName}</p><p>UPI ID: {order.upiId}</p><p>Amount: ₹{order.amountInr}</p><p>Order: {order.orderReference}</p><a className="mt-3 inline-block rounded-full bg-primary px-4 py-2 text-primary-foreground" href={order.upiUri}>Open UPI app</a></div>}
             {order && <div className="mt-4"><label htmlFor="upi-utr">UPI transaction reference (UTR)</label><input id="upi-utr" value={utr} onChange={e => setUtr(e.target.value)} className="mt-2 w-full rounded-lg border bg-background p-2" placeholder="Enter UTR after payment" /><button type="button" disabled={busy} onClick={submitUtr} className="mt-3 w-full rounded-full bg-primary p-3 text-primary-foreground">Submit UTR</button></div>}
             {paymentMessage && <p role="status" className="mt-3 text-sm">{paymentMessage}</p>}
             <p className="mt-3 text-xs text-muted-foreground">UPI redirect is not payment proof. Admin must match the amount and UTR against the bank statement before VPN access is activated.</p>
