@@ -127,14 +127,14 @@ function Index() {
               <ul className="mt-6 space-y-3 text-sm">
                 {((p.features as string[]) ?? []).map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
               </ul>
-              <a
-                onClick={() => startUpiPayment(p)} type="button" disabled={busy}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}
+              <button
+                type="button"
+                onClick={() => startUpiPayment(p)}
+                disabled={busy}
+                className={`mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3 font-bold transition disabled:opacity-50 ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}
               >
-                <span>💬</span> Contact to Subscribe
-              </a>
+                Pay with UPI
+              </button>
             </div>
           ))}
         </div>
