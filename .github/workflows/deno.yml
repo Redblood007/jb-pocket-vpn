@@ -27,7 +27,11 @@ jobs:
         run: |
           if [ -d "supabase/functions" ]; then
             deno lint --config supabase/functions/deno.json supabase/functions
-            deno test --config supabase/functions/deno.json -A supabase/functions
+            if find supabase/functions -type f -name '*_test.ts' -print -quit | grep -q .; then
+              deno test --config supabase/functions/deno.json -A supabase/functions
+            else
+              echo "No Deno test modules are present on this branch; lint completed."
+            fi
           else
             echo "No Supabase Edge Functions are present; Deno checks are not applicable to this repository yet."
           fi
