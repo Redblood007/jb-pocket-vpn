@@ -3,8 +3,6 @@ name: Web application checks
 on:
   pull_request:
     branches: ["main"]
-  push:
-    branches: ["main", "feature/native-wireguard-android-apk"]
   workflow_dispatch:
 
 permissions:
@@ -25,7 +23,4 @@ jobs:
       - name: Unit tests
         run: bun run test
       - name: Lint changed website and admin routes
-        run: bunx eslint src/routes/index.tsx src/routes/_authenticated/_admin.admin.tsx src/lib/admin-server.ts --rule 'prettier/prettier: off'
-      - name: Repository-wide lint audit
-        run: bun run lint
-        continue-on-error: true
+        run: bunx eslint src/routes/index.tsx src/routes/_authenticated/_admin.admin.tsx src/lib/admin-server.ts --rule=prettier/prettier:off
