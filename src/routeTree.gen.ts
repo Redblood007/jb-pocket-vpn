@@ -34,6 +34,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/account': typeof AccountRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
 }
 export interface FileRoutesByTo {
@@ -59,8 +60,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/admin-login' | '/login' | '/forgot-password' | '/account' | '/reset-password' | '/admin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin-login' | '/login' | '/forgot-password' | '/account' | '/admin'
-  id: '__root__' | '/' | '/_authenticated' | '/admin-login' | '/login' | '/forgot-password' | '/account' | '/_authenticated/_admin' | '/_authenticated/_admin/admin'
+  to: '/' | '/admin-login' | '/login' | '/forgot-password' | '/account' | '/reset-password' | '/admin'
+  id: '__root__' | '/' | '/_authenticated' | '/admin-login' | '/login' | '/forgot-password' | '/account' | '/reset-password' | '/_authenticated/_admin' | '/_authenticated/_admin/admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -70,6 +71,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   AccountRoute: typeof AccountRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -109,6 +111,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute,
   ForgotPasswordRoute,
   AccountRoute,
+  ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
 
