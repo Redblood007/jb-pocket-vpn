@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listPublicPlans } from "@/lib/admin-server";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,13 +24,6 @@ const plansQuery = queryOptions({
   queryFn: () => listPublicPlans(),
 });
 
-const WHATSAPP_NUMBER = "917006269882";
-
-function whatsappLink(planName: string, price: number, period: string) {
-  const text = `Hi, I want the ${planName} plan (₹${price}/${period === "yearly" ? "year" : "month"}).`;
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-}
-
 const features = [
   ["⚡", "Super fast", "10 Gbps servers, no speed limit."],
   ["🔒", "Military-grade encryption", "AES-256 + WireGuard protocol."],
@@ -47,7 +41,33 @@ const faqs = [
 
 function Index() {
   const [open, setOpen] = useState<number | null>(0);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [order, setOrder] = useState<any>(null);
+  const [utr, setUtr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState("");
   const { data: plans } = useSuspenseQuery(plansQuery);
+  async function startUpiPayment(plan: any) {
+    setBusy(true); setPaymentMessage(""); setSelectedPlan(plan); setOrder(null); setUtr("");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.access_token) { setPaymentMessage("Please sign in before purchasing."); return; }
+      const { data, error } = await supabase.functions.invoke("create-manual-upi-order", { body: { planId: plan.id } });
+      if (error) throw error;
+      setOrder(data); window.location.href = data.upiUri;
+    } catch (e) { setPaymentMessage(e instanceof Error ? e.message : "Could not create UPI order."); }
+    finally { setBusy(false); }
+  }
+  async function submitUtr() {
+    if (!order || utr.trim().length < 8) { setPaymentMessage("Enter a valid UPI transaction reference."); return; }
+    setBusy(true);
+    try {
+      const { error } = await supabase.functions.invoke("submit-manual-upi-reference", { body: { orderReference: order.orderReference, utrReference: utr.trim() } });
+      if (error) throw error;
+      setPaymentMessage("Reference submitted. Admin verification is required before VPN activation.");
+    } catch (e) { setPaymentMessage(e instanceof Error ? e.message : "Could not submit reference."); }
+    finally { setBusy(false); }
+  }
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
@@ -108,7 +128,7 @@ function Index() {
                 {((p.features as string[]) ?? []).map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
               </ul>
               <a
-                href={whatsappLink(p.name, p.price_inr, p.billing_period)}
+                onClick={() => startUpiPayment(p)} type="button" disabled={busy}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}
@@ -119,6 +139,18 @@ function Index() {
           ))}
         </div>
       </section>
+
+      {selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
+            <div className="flex justify-between"><h2 className="text-xl font-bold">UPI payment · {selectedPlan.name}</h2><button onClick={() => { setSelectedPlan(null); setOrder(null); }} type="button">Close</button></div>
+            {order && <div className="mt-4 rounded-xl bg-secondary p-4 text-sm"><p>Payee: Javaid Beigh</p><p>UPI ID: javaidbeigh121@okaxis</p><p>Amount: ₹{order.amountInr}</p><p>Order: {order.orderReference}</p><a className="mt-3 inline-block rounded-full bg-primary px-4 py-2 text-primary-foreground" href={order.upiUri}>Open UPI app</a></div>}
+            {order && <div className="mt-4"><label htmlFor="upi-utr">UPI transaction reference (UTR)</label><input id="upi-utr" value={utr} onChange={e => setUtr(e.target.value)} className="mt-2 w-full rounded-lg border bg-background p-2" placeholder="Enter UTR after payment" /><button type="button" disabled={busy} onClick={submitUtr} className="mt-3 w-full rounded-full bg-primary p-3 text-primary-foreground">Submit UTR</button></div>}
+            {paymentMessage && <p role="status" className="mt-3 text-sm">{paymentMessage}</p>}
+            <p className="mt-3 text-xs text-muted-foreground">UPI redirect is not payment proof. Admin must match the amount and UTR against the bank statement before VPN access is activated.</p>
+          </div>
+        </div>
+      )}
 
       <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
         <h2 className="text-center font-display text-4xl font-bold">FAQ</h2>
