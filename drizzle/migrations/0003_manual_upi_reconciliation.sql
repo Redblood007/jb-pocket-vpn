@@ -31,7 +31,7 @@ begin
     raise exception 'enter a valid UPI transaction reference';
   end if;
 
-  select id into v_customer_id
+  select customer_id into v_customer_id
   from public.payment_orders
   where order_reference = p_order_reference
     and status = 'pending'
