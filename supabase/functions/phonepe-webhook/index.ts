@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     const event = String(eventBody.event ?? "");
     const merchantOrderId = String(eventBody.payload?.merchantOrderId ?? eventBody.payload?.originalMerchantOrderId ?? "");
     if (!merchantOrderId) return json({ error: "Missing merchant order reference" }, 400);
-    if (!["checkout.order.completed", "checkout.order.failed", "pg.refund.completed"].includes(event)) {
+    if (!["checkout.order.completed", "checkout.order.failed"].includes(event)) {
       return json({ received: true, ignored: true });
     }
 
