@@ -1,10 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
-const corsHeaders = { "content-type": "application/json", "cache-control": "no-store" };
-
-function json(status: number, body: Record<string, unknown>) {
-  return new Response(JSON.stringify(body), { status, headers: corsHeaders });
-}
+const headers = { "content-type": "application/json", "cache-control": "no-store" };
+const json = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify(body), { status, headers });
 
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -25,37 +23,40 @@ Deno.serve(async (req: Request) => {
     return json(503, { error: "webhook_not_configured" });
   }
 
-  const auth = req.headers.get("authorization") ?? "";
-  const expected = "Basic " + btoa(username + ":" + password);
-  if (!safeEqual(auth, expected)) return json(401, { error: "unauthorized" });
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(username + ":" + password));
+  const expected = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const supplied = (req.headers.get("authorization") ?? "").replace(/^SHA256[ =]/i, "").trim().toLowerCase();
+  if (!safeEqual(supplied, expected)) return json(401, { error: "unauthorized" });
 
-  let event: any;
-  try { event = await req.json(); } catch { return json(400, { error: "invalid_json" }); }
+  let parsed: unknown;
+  try { parsed = await req.json(); } catch { return json(400, { error: "invalid_json" }); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return json(400, { error: "invalid_payload" });
+  const event = parsed as Record<string, unknown>;
+  const rawPayload = event.payload ?? event.data;
+  if (!rawPayload || typeof rawPayload !== "object" || Array.isArray(rawPayload)) return json(400, { error: "invalid_payload" });
+  const payload = rawPayload as Record<string, unknown>;
+  const state = String(payload.state ?? payload.paymentState ?? payload.status ?? "").toUpperCase();
+  const eventName = String(event.event ?? event.type ?? "").toLowerCase();
 
-  const payload = event?.payload ?? event?.data ?? {};
-  const state = String(payload?.state ?? payload?.paymentState ?? payload?.status ?? "").toUpperCase();
-  const eventName = String(event?.event ?? event?.type ?? "").toLowerCase();
-
-  // Only accept final successful payment notifications. Pending/failed callbacks never activate access.
   if (!(state === "COMPLETED" || state === "SUCCESS") ||
       (eventName && !eventName.includes("completed") && !eventName.includes("success"))) {
     return json(200, { received: true, ignored: true });
   }
 
-  const merchantOrderId = String(payload?.merchantOrderId ?? payload?.merchant_order_id ?? payload?.orderReference ?? "");
-  const details = Array.isArray(payload?.paymentDetails) ? payload.paymentDetails[0] : payload?.paymentDetails;
-  const transactionId = String(details?.transactionId ?? details?.transaction_id ?? payload?.transactionId ?? payload?.providerReferenceId ?? "");
-  const amountPaise = Number(payload?.amount ?? details?.amount);
+  const merchantOrderId = String(payload.merchantOrderId ?? payload.merchant_order_id ?? payload.orderReference ?? "");
+  const rawDetails = payload.paymentDetails;
+  const details = Array.isArray(rawDetails) ? rawDetails[0] : rawDetails;
+  const paymentDetails = details && typeof details === "object" ? details as Record<string, unknown> : {};
+  const transactionId = String(paymentDetails.transactionId ?? paymentDetails.transaction_id ?? payload.transactionId ?? payload.providerReferenceId ?? "");
+  const amountPaise = Number(payload.amount ?? paymentDetails.amount);
   if (!merchantOrderId || !transactionId || !Number.isSafeInteger(amountPaise) || amountPaise <= 0) {
     return json(400, { error: "missing_order_transaction_or_amount" });
   }
 
   const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
   const { data: order, error: lookupError } = await supabase
-    .from("payment_orders")
-    .select("id, amount_inr, status, provider")
-    .eq("order_reference", merchantOrderId)
-    .maybeSingle();
+    .from("payment_orders").select("id, amount_inr, provider")
+    .eq("order_reference", merchantOrderId).maybeSingle();
 
   if (lookupError) {
     console.error("PhonePe order lookup failed", lookupError.message);
@@ -73,6 +74,5 @@ Deno.serve(async (req: Request) => {
     console.error("PhonePe payment activation failed", activationError.message);
     return json(500, { error: "payment_activation_failed" });
   }
-
   return json(200, { received: true, activated: true, subscription_id: subscriptionId });
 });
