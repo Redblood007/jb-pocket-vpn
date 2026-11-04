@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AdminLoginRouteImport } from './routes/admin-login'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'\nimport { Route as LoginRouteImport } from './routes/login'\nimport { Route as ForgotPasswordRouteImport } from './routes/forgot-password'\nimport { Route as AccountRouteImport } from './routes/account'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/_admin/route'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin.admin'
 
@@ -59,7 +59,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin-login' | '/admin'
+  fullPaths: '/' | '/admin-login' | '/login' | '/forgot-password' | '/account' | '/admin'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/admin-login' | '/admin'
   id:
