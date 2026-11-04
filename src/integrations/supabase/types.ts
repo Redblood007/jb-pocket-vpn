@@ -70,6 +70,8 @@ export type Database = {
       plans: {
         Row: {
           created_at: string
+          billing_period: string
+          duration_days: number
           devices: number
           features: Json
           id: string
@@ -82,6 +84,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          billing_period?: string
+          duration_days?: number
           devices?: number
           features?: Json
           id?: string
@@ -94,6 +98,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          billing_period?: string
+          duration_days?: number
           devices?: number
           features?: Json
           id?: string
