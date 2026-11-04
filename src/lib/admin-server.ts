@@ -135,3 +135,32 @@ export const updatePlan = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+
+export const listAdminPayments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    await assertAdmin(supabase, userId);
+    const { data, error } = await supabase
+      .from("payment_orders")
+      .select("id, order_reference, customer_id, plan_id, amount_inr, currency, status, provider, provider_payment_id, utr_reference, submitted_at, created_at, expires_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const approveManualPayment = createServerFn({ method: "POST" })
+  .inputValidator((input: { order_reference: string; review_note?: string }) => input)
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    await assertAdmin(supabase, userId);
+    const { data: subscriptionId, error } = await supabase.rpc("admin_approve_manual_upi_payment", {
+      p_order_reference: data.order_reference,
+      p_review_note: data.review_note || "Bank statement reconciled by admin",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, subscriptionId };
+  });
