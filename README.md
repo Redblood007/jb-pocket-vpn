@@ -8,9 +8,9 @@ This project was built with sahil Beigh
 
 Continue developing this project in the Sahil Beigh
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Ship faster**: describe what you want to build and Sahil Beigh the code.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Sahil Beigh, ready for your next prompt.
 
 ## Development
 
