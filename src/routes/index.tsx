@@ -20,7 +20,16 @@ export const Route = createFileRoute("/")({
 
 const plansQuery = queryOptions({
   queryKey: ["plans"],
-  queryFn: () => listPublicPlans(),
+  // Keep the public landing page available even if Supabase is temporarily
+  // misconfigured or unreachable. Pricing will show a clear fallback state.
+  queryFn: async () => {
+    try {
+      return await listPublicPlans();
+    } catch (error) {
+      console.error("[Homepage] Could not load subscription plans:", error);
+      return [];
+    }
+  },
 });
 
 const WHATSAPP_NUMBER = "917006269882";
@@ -96,7 +105,14 @@ function Index() {
         <h2 className="text-center font-display text-4xl font-bold">Monthly Plans</h2>
         <p className="mt-3 text-center text-muted-foreground">Best rate, cancel anytime. 7-day money-back guarantee.</p>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {plans.map((p) => (
+          {plans.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center md:col-span-3">
+              <h3 className="font-display text-xl font-bold">Plans temporarily unavailable</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Subscription pricing is temporarily unavailable. Please check back shortly or contact support.
+              </p>
+            </div>
+          ) : plans.map((p) => (
             <div key={p.id} className={`relative rounded-3xl border p-8 ${p.popular ? "border-primary bg-card shadow-glow" : "border-border bg-card"}`}>
               {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">MOST POPULAR</span>}
               <h3 className="font-display text-xl font-bold">{p.name}</h3>
