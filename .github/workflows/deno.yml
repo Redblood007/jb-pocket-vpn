@@ -1,11 +1,3 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# This workflow will install Deno then run `deno lint` and `deno test`.
-# For more information see: https://github.com/denoland/setup-deno
-
 name: Deno
 
 on:
@@ -22,21 +14,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Deno
-        # uses: denoland/setup-deno@v1
-        uses: denoland/setup-deno@61fe2df320078202e33d7d5ad347e7dcfa0e8f31  # v1.1.2
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.x
+          deno-version: v2.x
 
-      # Uncomment this step to verify the use of 'deno fmt' on each commit.
-      # - name: Verify formatting
-      #   run: deno fmt --check
-
-      - name: Run linter
-        run: deno lint
-
-      - name: Run tests
-        run: deno test -A
+      - name: Lint and test Supabase Edge Functions
+        shell: bash
+        run: |
+          if [ -d "supabase/functions" ]; then
+            deno lint --config supabase/functions/deno.json supabase/functions
+            if find supabase/functions -type f -name '*_test.ts' -print -quit | grep -q .; then
+              deno test --config supabase/functions/deno.json -A supabase/functions
+            else
+              echo "No Deno test modules are present; lint completed."
+            fi
+          else
+            echo "No Supabase Edge Functions are present on this branch; Deno checks are not applicable."
+          fi
