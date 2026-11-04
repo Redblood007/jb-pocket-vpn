@@ -44,13 +44,15 @@ export const listAdminData = createServerFn({ method: "GET" })
       userId: string;
     };
     await assertAdmin(supabase, userId);
-    const [customers, plans] = await Promise.all([
+    const [customers, plans, payments] = await Promise.all([
       supabase.from("customers").select("*").order("created_at", { ascending: false }),
       supabase.from("plans").select("*").order("sort_order"),
+      supabase.from("payment_orders").select("id, order_reference, customer_id, plan_id, amount_inr, currency, status, provider, provider_payment_id, paid_at, expires_at, created_at").order("created_at", { ascending: false }).limit(100),
     ]);
     if (customers.error) throw new Error(customers.error.message);
     if (plans.error) throw new Error(plans.error.message);
-    return { customers: customers.data as Customer[], plans: plans.data as Plan[] };
+    if (payments.error) throw new Error(payments.error.message);
+    return { customers: customers.data as Customer[], plans: plans.data as Plan[], payments: payments.data };
   });
 
 export type NewCustomer = {
