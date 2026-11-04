@@ -23,13 +23,6 @@ const plansQuery = queryOptions({
   queryFn: () => listPublicPlans(),
 });
 
-const WHATSAPP_NUMBER = "917006269882";
-
-function whatsappLink(planName: string, price: number) {
-  const text = `Hi, I want the ${planName} plan (₹${price}/month).`;
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-}
-
 const features = [
   ["⚡", "Super fast", "10 Gbps servers, no speed limit."],
   ["🔒", "Military-grade encryption", "AES-256 + WireGuard protocol."],
@@ -42,7 +35,7 @@ const features = [
 const faqs = [
   ["Can I cancel anytime?", "Yes. Monthly plans have no contract — cancel any time."],
   ["Is there a money-back guarantee?", "Yes, 7-day full refund if you're not happy."],
-  ["Which payment methods?", "UPI, cards and net banking."],
+  ["Which payment methods?", "UPI checkout is available. Payment activation waits for verification."],
 ];
 
 function Index() {
@@ -57,7 +50,7 @@ function Index() {
           <a href="#pricing" className="hover:text-foreground">Pricing</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
-        <a href="#pricing" className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Get VPN</a>
+        <div className="flex items-center gap-2"><Link to="/login" className="rounded-full border border-border px-4 py-2 text-sm">Sign in</Link><Link to="/signup" className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Create account</Link></div>
       </header>
 
       <section className="bg-glow px-6 pb-24 pt-20 text-center">
@@ -108,12 +101,10 @@ function Index() {
                 {((p.features as string[]) ?? []).map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
               </ul>
               <a
-                href={whatsappLink(p.name, p.price_inr)}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/checkout"
                 className={`mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}
               >
-                <span>💬</span> Order on WhatsApp
+                <span>₹</span> Choose plan & pay with UPI
               </a>
             </div>
           ))}
