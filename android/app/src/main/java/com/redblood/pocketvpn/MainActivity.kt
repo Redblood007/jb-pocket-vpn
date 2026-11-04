@@ -11,6 +11,8 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : Activity() {
     private val bg = Color.rgb(8, 15, 29)
@@ -36,6 +38,12 @@ class MainActivity : Activity() {
             setPadding(dp(22), dp(22), dp(22), dp(28))
         }
         scroll.addView(root)
+        ViewCompat.setOnApplyWindowInsetsListener(scroll) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(0, bars.top, 0, bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(scroll)
 
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -49,9 +57,9 @@ class MainActivity : Activity() {
         root.addView(header)
         root.addView(space(24))
 
-        root.addView(label("Your privacy,\n protected.", 30f, Color.WHITE, true))
+        root.addView(label("Your privacy,\n under your control.", 30f, Color.WHITE, true))
         root.addView(space(8))
-        root.addView(label("A clean control center for your secure connection.", 14f, muted, false))
+        root.addView(label("VPN dashboard preview. A real encrypted tunnel is not active yet.", 14f, muted, false))
         root.addView(space(24))
 
         val hero = card()
@@ -71,7 +79,7 @@ class MainActivity : Activity() {
         status = label("Not connected", 22f, Color.WHITE, true)
         hero.addView(status)
         hero.addView(space(6))
-        hero.addView(label("Your traffic is not protected yet", 13f, muted, false))
+        hero.addView(label("VPN is not connected; traffic is not protected", 13f, muted, false))
         hero.addView(space(18))
         val connect = actionButton("CONNECT")
         connect.setOnClickListener { showSetupNotice() }
@@ -100,11 +108,11 @@ class MainActivity : Activity() {
         root.addView(sectionTitle("YOUR SECURITY", ""))
         root.addView(space(10))
         val security = card()
-        security.addView(featureRow("◈", "Encrypted tunnel", "Requires VPN server setup"))
+        security.addView(featureRow("◈", "WireGuard tunnel", "Not configured in this dashboard build"))
         security.addView(separator())
         security.addView(featureRow("◎", "No activity tracking", "Privacy-first app design"))
         security.addView(separator())
-        security.addView(featureRow("⌁", "Connection protection", "Available after server setup"))
+        security.addView(featureRow("⌁", "Traffic protection", "Not active in this dashboard build"))
         root.addView(security)
         root.addView(space(18))
 
