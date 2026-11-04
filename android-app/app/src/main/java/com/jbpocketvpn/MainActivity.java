@@ -3,15 +3,18 @@ package com.jbpocketvpn;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.VpnService;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.wireguard.android.backend.BackendException;
 import com.wireguard.android.backend.GoBackend;
 import com.wireguard.android.backend.Tunnel;
 import com.wireguard.config.Config;
@@ -28,6 +31,7 @@ public final class MainActivity extends Activity {
     private Tunnel tunnel;
     private Config config;
     private TextView status;
+    private TextView profileStatus;
     private Button connectButton;
     private String tunnelName = "JB Pocket VPN";
 
@@ -43,69 +47,134 @@ public final class MainActivity extends Activity {
         buildUi();
     }
 
+    private int dp(float value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private GradientDrawable rounded(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        return drawable;
+    }
+
+    private TextView text(String value, int size, int color, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(size);
+        view.setTextColor(color);
+        if (bold) view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        return view;
+    }
+
+    private LinearLayout.LayoutParams params(int width, int height) {
+        return new LinearLayout.LayoutParams(width < 0 ? width : dp(width), height < 0 ? height : dp(height));
+    }
+
     private void buildUi() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(Color.rgb(8, 14, 29));
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setPadding(32, 56, 32, 32);
-        root.setBackgroundColor(0xFF0B1020);
+        root.setPadding(dp(22), dp(28), dp(22), dp(28));
+        scroll.addView(root);
 
-        TextView title = new TextView(this);
-        title.setText("🛡  JB POCKET VPN");
-        title.setTextColor(0xFFFFFFFF);
-        title.setTextSize(26);
-        title.setGravity(Gravity.CENTER);
-        root.addView(title, matchWrap());
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        TextView logo = text("✦", 25, Color.rgb(83, 230, 160), true);
+        logo.setGravity(Gravity.CENTER);
+        logo.setBackground(rounded(Color.rgb(22, 43, 52), 14));
+        header.addView(logo, params(48, 48));
 
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Private connection powered by WireGuard");
-        subtitle.setTextColor(0xFFB8C2D9);
-        subtitle.setTextSize(14);
-        subtitle.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams subParams = matchWrap();
-        subParams.topMargin = 14;
-        root.addView(subtitle, subParams);
+        LinearLayout brand = new LinearLayout(this);
+        brand.setOrientation(LinearLayout.VERTICAL);
+        brand.setPadding(dp(12), 0, 0, 0);
+        brand.addView(text("JB POCKET VPN", 18, Color.WHITE, true));
+        brand.addView(text("PRIVATE • FAST • SECURE", 10, Color.rgb(143, 160, 184), true));
+        header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView pro = text("PRO", 11, Color.rgb(83, 230, 160), true);
+        pro.setPadding(dp(12), dp(7), dp(12), dp(7));
+        pro.setBackground(rounded(Color.rgb(20, 49, 43), 20));
+        header.addView(pro);
+        root.addView(header, params(-1, 52));
 
-        status = new TextView(this);
-        status.setText("No VPN profile imported");
-        status.setTextColor(0xFFFFD166);
-        status.setTextSize(16);
-        status.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams statusParams = matchWrap();
-        statusParams.topMargin = 56;
-        root.addView(status, statusParams);
+        TextView headline = text("Your privacy,\nyour connection.", 30, Color.WHITE, true);
+        headline.setLineSpacing(dp(3), 1f);
+        LinearLayout.LayoutParams headlineParams = params(-1, -2);
+        headlineParams.topMargin = dp(42);
+        root.addView(headline, headlineParams);
+        TextView description = text("Connect securely through your WireGuard VPN.", 14, Color.rgb(153, 168, 190), false);
+        LinearLayout.LayoutParams descriptionParams = params(-1, -2);
+        descriptionParams.topMargin = dp(10);
+        root.addView(description, descriptionParams);
 
-        Button importButton = new Button(this);
-        importButton.setText("IMPORT WIREGUARD CONFIG");
-        LinearLayout.LayoutParams importParams = matchWrap();
-        importParams.topMargin = 36;
-        root.addView(importButton, importParams);
-        importButton.setOnClickListener(v -> openConfigPicker());
+        LinearLayout statusCard = new LinearLayout(this);
+        statusCard.setOrientation(LinearLayout.VERTICAL);
+        statusCard.setPadding(dp(18), dp(18), dp(18), dp(18));
+        statusCard.setBackground(rounded(Color.rgb(17, 27, 47), 20));
+        LinearLayout.LayoutParams cardParams = params(-1, -2);
+        cardParams.topMargin = dp(34);
+        root.addView(statusCard, cardParams);
+
+        TextView label = text("CONNECTION STATUS", 11, Color.rgb(143, 160, 184), true);
+        statusCard.addView(label);
+        status = text("DISCONNECTED", 21, Color.rgb(255, 203, 107), true);
+        LinearLayout.LayoutParams statusParams = params(-1, -2);
+        statusParams.topMargin = dp(10);
+        statusCard.addView(status, statusParams);
+        profileStatus = text("No WireGuard profile imported", 13, Color.rgb(153, 168, 190), false);
+        LinearLayout.LayoutParams profileParams = params(-1, -2);
+        profileParams.topMargin = dp(8);
+        statusCard.addView(profileStatus, profileParams);
 
         connectButton = new Button(this);
         connectButton.setText("CONNECT");
-        LinearLayout.LayoutParams connectParams = matchWrap();
-        connectParams.topMargin = 16;
+        connectButton.setAllCaps(false);
+        connectButton.setTextSize(17);
+        connectButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        connectButton.setTextColor(Color.rgb(5, 25, 20));
+        connectButton.setBackground(rounded(Color.rgb(83, 230, 160), 16));
+        connectButton.setElevation(dp(3));
+        LinearLayout.LayoutParams connectParams = params(-1, 58);
+        connectParams.topMargin = dp(24);
         root.addView(connectButton, connectParams);
         connectButton.setOnClickListener(v -> toggleTunnel());
 
-        TextView footer = new TextView(this);
-        footer.setText("Your WireGuard private key stays on this device.");
-        footer.setTextColor(0xFF8F9BB3);
-        footer.setTextSize(12);
+        Button importButton = new Button(this);
+        importButton.setText("Import WireGuard profile");
+        importButton.setAllCaps(false);
+        importButton.setTextSize(14);
+        importButton.setTextColor(Color.WHITE);
+        importButton.setBackground(rounded(Color.rgb(28, 42, 66), 16));
+        LinearLayout.LayoutParams importParams = params(-1, 52);
+        importParams.topMargin = dp(12);
+        root.addView(importButton, importParams);
+        importButton.setOnClickListener(v -> openConfigPicker());
+
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(dp(16), dp(16), dp(16), dp(16));
+        info.setBackground(rounded(Color.rgb(13, 22, 39), 16));
+        LinearLayout.LayoutParams infoParams = params(-1, -2);
+        infoParams.topMargin = dp(28);
+        root.addView(info, infoParams);
+        info.addView(text("HOW TO CONNECT", 12, Color.rgb(83, 230, 160), true));
+        TextView steps = text("1. Import your .conf file from WireGuard\n2. Tap Connect and approve Android VPN permission\n3. Tap Disconnect when you are finished", 13, Color.rgb(177, 190, 210), false);
+        steps.setLineSpacing(dp(7), 1f);
+        LinearLayout.LayoutParams stepsParams = params(-1, -2);
+        stepsParams.topMargin = dp(12);
+        info.addView(steps, stepsParams);
+
+        TextView footer = text("WireGuard tunnel • Profile stays on this device", 11, Color.rgb(112, 130, 155), false);
         footer.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams footerParams = matchWrap();
-        footerParams.topMargin = 40;
+        LinearLayout.LayoutParams footerParams = params(-1, -2);
+        footerParams.topMargin = dp(28);
         root.addView(footer, footerParams);
 
-        setContentView(root);
-    }
-
-    private LinearLayout.LayoutParams matchWrap() {
-        return new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        );
+        setContentView(scroll);
     }
 
     private void openConfigPicker() {
@@ -121,13 +190,13 @@ public final class MainActivity extends Activity {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                     getContentResolver().openInputStream(data.getData()), StandardCharsets.UTF_8))) {
                 config = Config.parse(reader);
-                status.setText("Profile imported — ready to connect");
-                status.setTextColor(0xFF66E3A4);
+                profileStatus.setText("WireGuard profile imported • Ready to connect");
+                profileStatus.setTextColor(Color.rgb(83, 230, 160));
                 Toast.makeText(this, "WireGuard profile imported", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 config = null;
-                status.setText("Could not read this config file");
-                status.setTextColor(0xFFFF7777);
+                profileStatus.setText("Could not read this config file");
+                profileStatus.setTextColor(Color.rgb(255, 119, 119));
                 Toast.makeText(this, "Invalid WireGuard config: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         } else if (requestCode == REQUEST_VPN_PERMISSION) {
@@ -138,7 +207,7 @@ public final class MainActivity extends Activity {
 
     private void toggleTunnel() {
         if (config == null) {
-            Toast.makeText(this, "First export your tunnel config from WireGuard and import it here.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Import your WireGuard .conf file first.", Toast.LENGTH_LONG).show();
             return;
         }
         try {
@@ -152,7 +221,7 @@ public final class MainActivity extends Activity {
             }
         } catch (Exception e) {
             status.setText("VPN error: " + e.getMessage());
-            status.setTextColor(0xFFFF7777);
+            status.setTextColor(Color.rgb(255, 119, 119));
         }
     }
 
@@ -161,15 +230,16 @@ public final class MainActivity extends Activity {
             backend.setState(tunnel, Tunnel.State.UP, config);
             showState(Tunnel.State.UP);
         } catch (Exception e) {
-            status.setText("Connection failed: " + e.getMessage());
-            status.setTextColor(0xFFFF7777);
+            status.setText("Connection failed");
+            status.setTextColor(Color.rgb(255, 119, 119));
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
     private void showState(Tunnel.State state) {
         boolean up = state == Tunnel.State.UP;
         status.setText(up ? "CONNECTED" : "DISCONNECTED");
-        status.setTextColor(up ? 0xFF66E3A4 : 0xFFFFD166);
+        status.setTextColor(up ? Color.rgb(83, 230, 160) : Color.rgb(255, 203, 107));
         connectButton.setText(up ? "DISCONNECT" : "CONNECT");
     }
 }
