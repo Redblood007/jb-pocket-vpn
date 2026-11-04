@@ -26,8 +26,8 @@ jobs:
         shell: bash
         run: |
           if [ -d "supabase/functions" ]; then
-            deno lint supabase/functions
-            deno test -A supabase/functions
+            deno lint --config supabase/functions/deno.json supabase/functions
+            deno test --config supabase/functions/deno.json --permit-no-files -A supabase/functions
           else
             echo "No Supabase Edge Functions are present; Deno checks are not applicable to this repository yet."
           fi
