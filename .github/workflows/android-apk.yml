@@ -2,6 +2,9 @@ name: Build JB Pocket VPN Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/native-wireguard-android-apk
 
 permissions:
   contents: read
@@ -24,8 +27,31 @@ jobs:
       - name: Build debug APK
         working-directory: android-app
         run: gradle assembleDebug
-      - name: Upload APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: jb-pocket-vpn-debug-apk
           path: android-app/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Prepare release signing key
+        if: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 != '' && secrets.VPN_RELEASE_STORE_PASSWORD != '' && secrets.VPN_RELEASE_KEY_ALIAS != '' && secrets.VPN_RELEASE_KEY_PASSWORD != '' }}
+        env:
+          VPN_RELEASE_KEYSTORE_BASE64: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          echo "$VPN_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vpn-release.jks"
+      - name: Build signed release APK
+        if: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 != '' && secrets.VPN_RELEASE_STORE_PASSWORD != '' && secrets.VPN_RELEASE_KEY_ALIAS != '' && secrets.VPN_RELEASE_KEY_PASSWORD != '' }}
+        working-directory: android-app
+        env:
+          VPN_RELEASE_STORE_FILE: ${{ runner.temp }}/vpn-release.jks
+          VPN_RELEASE_STORE_PASSWORD: ${{ secrets.VPN_RELEASE_STORE_PASSWORD }}
+          VPN_RELEASE_KEY_ALIAS: ${{ secrets.VPN_RELEASE_KEY_ALIAS }}
+          VPN_RELEASE_KEY_PASSWORD: ${{ secrets.VPN_RELEASE_KEY_PASSWORD }}
+        run: gradle assembleRelease
+      - name: Upload signed release APK
+        if: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 != '' && secrets.VPN_RELEASE_STORE_PASSWORD != '' && secrets.VPN_RELEASE_KEY_ALIAS != '' && secrets.VPN_RELEASE_KEY_PASSWORD != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jb-pocket-vpn-signed-release-apk
+          path: android-app/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
