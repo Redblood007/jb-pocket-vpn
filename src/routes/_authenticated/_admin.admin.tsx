@@ -160,8 +160,6 @@ function PaymentsTab({ payments, customers, plans, onRefresh }: { payments: Paym
     toast.success("Payment verified and subscription activated");
     onRefresh();
   }
-  const customerById = new Map(customers.map((customer) => [customer.id, customer]));
-  const planById = new Map(plans.map((plan) => [plan.id, plan]));
   return (
     <section>
       <h1 className="mb-2 font-display text-2xl font-bold">Payment Orders</h1>
