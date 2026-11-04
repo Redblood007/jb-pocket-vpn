@@ -5,10 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/admin-login")({
   head: () => ({
     meta: [
-      { title: "Admin Login — ShieldX VPN Pro" },
-      { name: "description", content: "ShieldX VPN Pro admin panel login." },
-      { property: "og:title", content: "Admin Login — ShieldX VPN Pro" },
-      { property: "og:description", content: "ShieldX VPN Pro admin panel login." },
+      { title: "Admin Login — JB Pocket VPN" },
+      { name: "description", content: "JB Pocket VPN admin panel login." },
+      { property: "og:title", content: "Admin Login — JB Pocket VPN" },
+      { property: "og:description", content: "JB Pocket VPN admin panel login." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -40,7 +40,7 @@ function AdminLogin() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 font-sans text-foreground">
       <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-8">
         <div className="text-center">
-          <span className="font-display text-xl font-bold">🛡️ ShieldX <span className="text-primary">Pro</span></span>
+          <span className="font-display text-xl font-bold">🛡️ JB <span className="text-primary">Pocket VPN</span></span>
           <h1 className="mt-4 font-display text-2xl font-bold">Admin Login</h1>
           <p className="mt-2 text-sm text-muted-foreground">For the site owner only.</p>
         </div>
@@ -54,7 +54,7 @@ function AdminLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-              placeholder="admin@shieldxvpn.in"
+              placeholder="Enter admin email"
             />
           </div>
           <div>
