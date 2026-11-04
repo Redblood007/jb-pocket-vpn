@@ -26,7 +26,7 @@ function ResetPassword() {
       return;
     }
     setMessage("Your password has been updated.");
-    window.setTimeout(() => void navigate({ to: "/login" }), 1200);
+    globalThis.setTimeout(() => void navigate({ to: "/login" }), 1200);
   }
 
   return (
