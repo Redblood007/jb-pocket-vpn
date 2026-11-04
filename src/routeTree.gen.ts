@@ -43,6 +43,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/account': typeof AccountRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminAdminRoute
 }
 export interface FileRoutesById {
@@ -53,6 +54,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/account': typeof AccountRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRoute
 }
