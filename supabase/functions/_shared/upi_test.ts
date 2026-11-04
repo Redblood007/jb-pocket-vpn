@@ -1,4 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
+// UPI intent validation tests.
 import { buildUpiIntent } from "./upi.ts";
 
 Deno.test("builds a UPI intent with exact INR amount and order reference", () => {
