@@ -135,3 +135,49 @@ export const updatePlan = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+
+/**
+ * Creates a pending UPI intent for the signed-in customer.
+ * This does NOT verify payment. Only a trusted gateway webhook or admin review
+ * may transition an order to "paid".
+ */
+export const createPendingUpiOrder = createServerFn({ method: "POST" })
+  .inputValidator((input: { planId: string }) => input)
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    if (!/^[0-9a-f-]{36}$/i.test(data.planId)) throw new Error("Invalid plan");
+    const { data: plan, error: planError } = await supabase
+      .from("plans")
+      .select("id,name,price_inr")
+      .eq("id", data.planId)
+      .maybeSingle();
+    if (planError || !plan) throw new Error("Selected plan is unavailable");
+
+    const reference = `JBVPN-${globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`;
+    const { error: insertError } = await supabase.from("payment_orders").insert({
+      user_id: userId,
+      plan_id: plan.id,
+      amount_inr: plan.price_inr,
+      upi_reference: reference,
+      status: "pending",
+      provider: "upi_intent",
+    });
+    if (insertError) throw new Error("Could not create payment order: " + insertError.message);
+
+    const params = new URLSearchParams({
+      pa: "7006269882@ybl",
+      pn: "JB Pocket VPN",
+      am: String(plan.price_inr),
+      cu: "INR",
+      tn: `${plan.name} VPN subscription ${reference}`,
+      tr: reference,
+    });
+    return {
+      reference,
+      amountInr: plan.price_inr,
+      upiUrl: `upi://pay?${params.toString()}`,
+      status: "pending" as const,
+    };
+  });
