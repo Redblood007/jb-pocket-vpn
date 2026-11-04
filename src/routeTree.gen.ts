@@ -13,7 +13,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as AccountRouteImport } from './routes/account'\nimport { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AccountRouteImport } from './routes/account'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/_admin/route'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin.admin'
 
@@ -22,7 +23,8 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({ id: '/_au
 const AdminLoginRoute = AdminLoginRouteImport.update({ id: '/admin-login', path: '/admin-login', getParentRoute: () => rootRouteImport } as any)
 const LoginRoute = LoginRouteImport.update({ id: '/login', path: '/login', getParentRoute: () => rootRouteImport } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({ id: '/forgot-password', path: '/forgot-password', getParentRoute: () => rootRouteImport } as any)
-const AccountRoute = AccountRouteImport.update({ id: '/account', path: '/account', getParentRoute: () => rootRouteImport } as any)\nconst ResetPasswordRoute = ResetPasswordRouteImport.update({ id: '/reset-password', path: '/reset-password', getParentRoute: () => rootRouteImport } as any)
+const AccountRoute = AccountRouteImport.update({ id: '/account', path: '/account', getParentRoute: () => rootRouteImport } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({ id: '/reset-password', path: '/reset-password', getParentRoute: () => rootRouteImport } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({ id: '/_admin', getParentRoute: () => AuthenticatedRouteRoute } as any)
 const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({ id: '/admin', path: '/admin', getParentRoute: () => AuthenticatedAdminRouteRoute } as any)
 
@@ -77,7 +79,8 @@ declare module '@tanstack/react-router' {
     '/admin-login': { id: '/admin-login'; path: '/admin-login'; fullPath: '/admin-login'; preLoaderRoute: typeof AdminLoginRouteImport; parentRoute: typeof rootRouteImport }
     '/login': { id: '/login'; path: '/login'; fullPath: '/login'; preLoaderRoute: typeof LoginRouteImport; parentRoute: typeof rootRouteImport }
     '/forgot-password': { id: '/forgot-password'; path: '/forgot-password'; fullPath: '/forgot-password'; preLoaderRoute: typeof ForgotPasswordRouteImport; parentRoute: typeof rootRouteImport }
-    '/account': { id: '/account'; path: '/account'; fullPath: '/account'; preLoaderRoute: typeof AccountRouteImport; parentRoute: typeof rootRouteImport }\n    '/reset-password': { id: '/reset-password'; path: '/reset-password'; fullPath: '/reset-password'; preLoaderRoute: typeof ResetPasswordRouteImport; parentRoute: typeof rootRouteImport }
+    '/account': { id: '/account'; path: '/account'; fullPath: '/account'; preLoaderRoute: typeof AccountRouteImport; parentRoute: typeof rootRouteImport }
+    '/reset-password': { id: '/reset-password'; path: '/reset-password'; fullPath: '/reset-password'; preLoaderRoute: typeof ResetPasswordRouteImport; parentRoute: typeof rootRouteImport }
     '/_authenticated/_admin': { id: '/_authenticated/_admin'; path: ''; fullPath: '/'; preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
     '/_authenticated/_admin/admin': { id: '/_authenticated/_admin/admin'; path: '/admin'; fullPath: '/admin'; preLoaderRoute: typeof AuthenticatedAdminAdminRouteImport; parentRoute: typeof AuthenticatedAdminRouteRoute }
   }
