@@ -12,6 +12,8 @@ import {
   deleteCustomer,
   setCustomerActive,
   updatePlan,
+  listAdminPayments,
+  approveManualPayment,
   type Plan,
 } from "@/lib/admin-server";
 
@@ -33,7 +35,10 @@ function AdminPage() {
   const [tab, setTab] = useState<"customers" | "plans" | "payments">("customers");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fetchAdminData = useServerFn(listAdminData);\n  const fetchPayments = useServerFn(listAdminPayments);\n  const approvePayment = useMutation({ mutationFn: useServerFn(approveManualPayment), onSuccess: () => { toast.success("Manual UPI payment approved"); queryClient.invalidateQueries({ queryKey: ["admin-payments"] }); refresh(); }, onError: (e) => toast.error("Approval failed: " + e.message) });\n  const paymentsQuery = useQuery({ queryKey: ["admin-payments"], queryFn: () => fetchPayments(), enabled: tab === "payments" });
+  const fetchAdminData = useServerFn(listAdminData);
+  const fetchPayments = useServerFn(listAdminPayments);
+  const approvePayment = useMutation({ mutationFn: useServerFn(approveManualPayment), onSuccess: () => { toast.success("Manual UPI payment approved"); queryClient.invalidateQueries({ queryKey: ["admin-payments"] }); refresh(); }, onError: (e) => toast.error("Approval failed: " + e.message) });
+  const paymentsQuery = useQuery({ queryKey: ["admin-payments"], queryFn: () => fetchPayments(), enabled: tab === "payments" });
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-data"],
     queryFn: () => fetchAdminData(),
@@ -101,7 +106,8 @@ function AdminPage() {
             <button onClick={() => setTab("customers")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "customers" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
               Customers ({customers.length})
             </button>
-            <button onClick={() => setTab("payments")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "payments" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>Payments</button>\n            <button onClick={() => setTab("plans")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "plans" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
+            <button onClick={() => setTab("payments")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "payments" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>Payments</button>
+            <button onClick={() => setTab("plans")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "plans" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
               Plans
             </button>
             <button onClick={handleSignOut} className="rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-secondary">
@@ -112,7 +118,9 @@ function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        {tab === "payments" ? (\n          <PaymentsTab payments={paymentsQuery.data ?? []} loading={paymentsQuery.isLoading} onApprove={(order_reference) => approvePayment.mutate({ data: { order_reference, review_note: "Bank statement reconciled by admin" } })} approving={approvePayment.isPending} />\n        ) : tab === "customers" ? (
+        {tab === "payments" ? (
+          <PaymentsTab payments={paymentsQuery.data ?? []} loading={paymentsQuery.isLoading} onApprove={(order_reference) => approvePayment.mutate({ data: { order_reference, review_note: "Bank statement reconciled by admin" } })} approving={approvePayment.isPending} />
+        ) : tab === "customers" ? (
           <CustomersTab
             customers={customers}
             plans={plans}
