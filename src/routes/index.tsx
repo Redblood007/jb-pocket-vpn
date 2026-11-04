@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listPublicPlans } from "@/lib/admin-server";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,11 +31,20 @@ const plansQuery = queryOptions({
   },
 });
 
-const WHATSAPP_NUMBER = "917006269882";
-function whatsappLink(planName: string, price: number) {
-  const message = `Hi, I want to know more about the ${planName} plan (₹${price}).`;
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-}
+type ManualUpiOrder = {
+  orderReference: string;
+  amountInr: number;
+  currency: "INR";
+  upiId: string;
+  payeeName: string;
+  upiUri: string;
+  expiresAt: string;
+  paymentStatus: "pending";
+  verification: "manual_admin_review";
+};
+
+const UPI_ID = "7006269882@ybl";
+const PAYEE_NAME = "BLACKBIRD";
 
 const benefits = [
   { icon: "⚡", title: "High-speed browsing", text: "Enjoy responsive connections for everyday browsing." },
@@ -52,7 +62,56 @@ const faqs = [
 
 function Index() {
   const [open, setOpen] = useState<number | null>(0);
+  const [selectedPlan, setSelectedPlan] = useState<{ id: string; name: string } | null>(null);
+  const [paymentOrder, setPaymentOrder] = useState<ManualUpiOrder | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [utr, setUtr] = useState("");
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [submittingUtr, setSubmittingUtr] = useState(false);
+  const [utrSubmitted, setUtrSubmitted] = useState(false);
   const { data: plans } = useSuspenseQuery(plansQuery);
+
+  async function startUpiPayment(plan: { id: string; name: string }) {
+    setSelectedPlan(plan);
+    setPaymentOrder(null);
+    setPaymentError(null);
+    setUtr("");
+    setUtrSubmitted(false);
+    setCreatingOrder(true);
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      setCreatingOrder(false);
+      setPaymentError("Please sign in or create a customer account before placing a payment order.");
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke("create-manual-upi-order", {
+      body: { planId: plan.id },
+    });
+    setCreatingOrder(false);
+    if (error || !data?.upiUri) {
+      setPaymentError(data?.error ?? error?.message ?? "Could not create your UPI order. Please try again.");
+      return;
+    }
+    setPaymentOrder(data as ManualUpiOrder);
+  }
+
+  async function submitUtr() {
+    if (!paymentOrder || utr.trim().length < 8) {
+      setPaymentError("Enter the UPI transaction reference (at least 8 characters).");
+      return;
+    }
+    setSubmittingUtr(true);
+    setPaymentError(null);
+    const { data, error } = await supabase.functions.invoke("submit-manual-upi-reference", {
+      body: { orderReference: paymentOrder.orderReference, utrReference: utr.trim() },
+    });
+    setSubmittingUtr(false);
+    if (error || !data?.submitted) {
+      setPaymentError(data?.error ?? error?.message ?? "Could not submit the UTR. Please try again.");
+      return;
+    }
+    setUtrSubmitted(true);
+  }
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#050b1b] text-slate-100">
@@ -123,11 +182,11 @@ function Index() {
                 <h3 className="font-display text-2xl font-bold">{p.name}</h3>
                 <div className="mt-5 flex items-end gap-2"><span className="font-display text-5xl font-extrabold">₹{p.price_inr}</span><span className="mb-2 text-sm text-slate-400">/ month</span></div>
                 <div className="mt-6 flex-1 space-y-3 text-sm text-slate-300">{((p.features as string[]) ?? []).map((feature) => <div key={feature} className="flex gap-3"><span className="font-bold text-emerald-300">✓</span><span>{feature}</span></div>)}</div>
-                <a href={whatsappLink(p.name, p.price_inr)} target="_blank" rel="noopener noreferrer" className={`mt-8 rounded-xl px-5 py-3 text-center font-bold transition ${p.popular ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300" : "border border-emerald-300/50 text-emerald-200 hover:bg-emerald-300/10"}`}>Enquire on WhatsApp ↗</a>
+                <button type="button" onClick={() => startUpiPayment({ id: p.id, name: p.name })} className={`mt-8 rounded-xl px-5 py-3 text-center font-bold transition ${p.popular ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300" : "border border-emerald-300/50 text-emerald-200 hover:bg-emerald-300/10"}`}>Pay with UPI</button>
               </article>
             ))}
           </div>
-          <p className="mt-6 text-center text-xs text-slate-500">Plan details and availability are confirmed by our support team. Payment processing is not yet enabled on this website.</p>
+          <p className="mt-6 text-center text-xs text-slate-500">Pay securely using any UPI app. Submit your UPI transaction reference after payment; access is activated only after admin verification.</p>
         </div>
       </section>
 
@@ -141,6 +200,41 @@ function Index() {
       </section>
 
       <section id="faq" className="mx-auto max-w-3xl px-5 py-20 sm:px-8"><div className="text-center"><p className="text-sm font-bold uppercase tracking-[.24em] text-emerald-300">FAQ</p><h2 className="mt-3 font-display text-4xl font-extrabold">Questions, answered</h2></div><div className="mt-10 space-y-3">{faqs.map(([question,answer],i) => <div key={question} className="rounded-2xl border border-slate-700 bg-[#0a172b]"><button onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i} className="flex w-full items-center justify-between gap-4 p-5 text-left font-semibold hover:text-emerald-300">{question}<span className="text-xl text-emerald-300">{open === i ? "−" : "+"}</span></button>{open === i && <p className="px-5 pb-5 text-sm leading-6 text-slate-400">{answer}</p>}</div>)}</div></section>
+
+      {selectedPlan && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/80 p-4" role="dialog" aria-modal="true" aria-labelledby="upi-payment-title">
+          <div className="my-auto w-full max-w-lg rounded-3xl border border-emerald-300/30 bg-[#0a172b] p-6 shadow-2xl sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div><p className="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">Manual UPI payment</p><h2 id="upi-payment-title" className="mt-2 text-2xl font-extrabold">Pay for {selectedPlan.name}</h2></div>
+              <button type="button" onClick={() => setSelectedPlan(null)} className="rounded-lg border border-white/20 px-3 py-1 text-slate-300 hover:text-white" aria-label="Close payment window">✕</button>
+            </div>
+            {creatingOrder && <p className="mt-6 text-sm text-slate-300">Creating your secure payment order…</p>}
+            {paymentError && <div className="mt-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-200">{paymentError} {!paymentOrder && <Link to="/login" className="ml-1 underline">Customer login</Link>}</div>}
+            {paymentOrder && !utrSubmitted && (
+              <>
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="text-sm text-slate-400">Pay exactly</div>
+                  <div className="mt-1 text-4xl font-extrabold text-white">₹{paymentOrder.amountInr}</div>
+                  <div className="mt-5 text-sm text-slate-400">Recipient</div>
+                  <div className="font-bold text-white">{paymentOrder.payeeName}</div>
+                  <div className="mt-1 break-all text-emerald-300">{paymentOrder.upiId}</div>
+                  <button type="button" onClick={() => navigator.clipboard.writeText(paymentOrder.upiId)} className="mt-3 rounded-lg border border-emerald-300/40 px-3 py-2 text-xs font-semibold text-emerald-200">Copy UPI ID</button>
+                  <div className="mt-4 break-all text-xs text-slate-500">Order: {paymentOrder.orderReference}</div>
+                </div>
+                <a href={paymentOrder.upiUri} className="mt-5 block rounded-xl bg-emerald-400 px-5 py-3 text-center font-extrabold text-slate-950 hover:bg-emerald-300">Open UPI app to pay</a>
+                <p className="mt-3 text-center text-xs text-slate-400">Works with PhonePe, Google Pay, Paytm, BHIM and other UPI apps.</p>
+                <form onSubmit={(event) => { event.preventDefault(); void submitUtr(); }} className="mt-6 space-y-3">
+                  <label htmlFor="upi-utr" className="block text-sm font-semibold text-white">UPI transaction reference (UTR)</label>
+                  <input id="upi-utr" value={utr} onChange={(event) => setUtr(event.target.value)} minLength={8} maxLength={64} required placeholder="Enter the 12-digit UTR / transaction ID" className="w-full rounded-xl border border-slate-600 bg-[#050b1b] px-4 py-3 text-white outline-none focus:border-emerald-300" />
+                  <button type="submit" disabled={submittingUtr} className="w-full rounded-xl border border-emerald-300/50 px-5 py-3 font-bold text-emerald-200 disabled:opacity-50">{submittingUtr ? "Submitting…" : "I have paid — Submit UTR"}</button>
+                </form>
+              </>
+            )}
+            {utrSubmitted && <div className="mt-6 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5"><div className="text-lg font-bold text-emerald-200">Payment reference submitted</div><p className="mt-2 text-sm leading-6 text-slate-300">Your UTR is awaiting admin verification. Your VPN subscription will be activated only after the payment is confirmed.</p><div className="mt-3 break-all text-xs text-slate-400">Order: {paymentOrder?.orderReference}</div></div>}
+            <button type="button" onClick={() => setSelectedPlan(null)} className="mt-5 w-full py-2 text-sm text-slate-400 hover:text-white">{utrSubmitted ? "Close" : "Cancel"}</button>
+          </div>
+        </div>
+      )}
 
       <footer className="border-t border-white/10 bg-[#030814]"><div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-8"><div><div className="font-display text-lg font-extrabold text-white">JB Pocket <span className="text-emerald-300">VPN</span></div><p className="mt-1">Privacy-focused connectivity, made simple.</p></div><div className="flex flex-wrap gap-5"><a href="#features" className="hover:text-emerald-300">Features</a><a href="#pricing" className="hover:text-emerald-300">Pricing</a><Link to="/login" className="hover:text-emerald-300">Customer Login</Link><Link to="/admin-login" className="hover:text-emerald-300">Admin</Link></div><p>© 2026 JB Pocket VPN. All rights reserved.</p></div></footer>
     </main>
