@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -26,7 +26,7 @@ export const listPublicPlans = createServerFn({ method: "GET" }).handler(async (
   return data;
 });
 
-async function assertAdmin(supabase: any, userId: string) {
+async function assertAdmin(supabase: SupabaseClient<Database>, userId: string) {
   const { data } = await supabase
     .from("user_roles")
     .select("role")
@@ -40,7 +40,7 @@ export const listAdminData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as never as {
-      supabase: any;
+      supabase: SupabaseClient<Database>;
       userId: string;
     };
     await assertAdmin(supabase, userId);
@@ -68,7 +68,7 @@ export const createCustomer = createServerFn({ method: "POST" })
   .inputValidator((input: NewCustomer) => input)
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    const { supabase, userId } = context as never as { supabase: SupabaseClient<Database>; userId: string };
     await assertAdmin(supabase, userId);
     const { error } = await supabase.from("customers").insert({
       name: data.name,
@@ -88,7 +88,7 @@ export const deleteCustomer = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => input)
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    const { supabase, userId } = context as never as { supabase: SupabaseClient<Database>; userId: string };
     await assertAdmin(supabase, userId);
     const { error } = await supabase.from("customers").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -99,7 +99,7 @@ export const setCustomerActive = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string; active: boolean }) => input)
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    const { supabase, userId } = context as never as { supabase: SupabaseClient<Database>; userId: string };
     await assertAdmin(supabase, userId);
     const { error } = await supabase.from("customers").update({ active: data.active }).eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -119,7 +119,7 @@ export const updatePlan = createServerFn({ method: "POST" })
   .inputValidator((input: PlanUpdate) => input)
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    const { supabase, userId } = context as never as { supabase: SupabaseClient<Database>; userId: string };
     await assertAdmin(supabase, userId);
     const { error } = await supabase
       .from("plans")
@@ -140,7 +140,7 @@ export const updatePlan = createServerFn({ method: "POST" })
 export const listAdminPayments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    const { supabase, userId } = context as never as { supabase: SupabaseClient<Database>; userId: string };
     await assertAdmin(supabase, userId);
     const { data, error } = await supabase
       .from("payment_orders")
@@ -155,7 +155,7 @@ export const approveManualPayment = createServerFn({ method: "POST" })
   .inputValidator((input: { order_reference: string; review_note?: string }) => input)
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    const { supabase, userId } = context as never as { supabase: SupabaseClient<Database>; userId: string };
     await assertAdmin(supabase, userId);
     const { data: subscriptionId, error } = await supabase.rpc("admin_approve_manual_upi_payment", {
       p_order_reference: data.order_reference,
