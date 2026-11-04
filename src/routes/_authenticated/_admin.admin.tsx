@@ -178,6 +178,7 @@ function PaymentsTab({ payments, customers, plans, onRefresh }: { payments: Paym
                 <td className="px-4 py-3">{customerById.get(payment.customer_id)?.name ?? "Customer"}</td>
                 <td className="px-4 py-3">{planById.get(payment.plan_id)?.name ?? "—"}</td>
                 <td className="px-4 py-3">₹{payment.amount_inr}</td>
+                <td className="px-4 py-3">{payment.provider}</td>
                 <td className="px-4 py-3 font-mono text-xs">{payment.utr_reference ?? "—"}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-3 py-1 text-xs font-bold ${payment.status === "paid" ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"}`}>{payment.status}</span></td>
                 <td className="px-4 py-3 text-muted-foreground">{new Date(payment.created_at).toLocaleString()}</td>
