@@ -51,8 +51,8 @@ export const listAdminData = createServerFn({ method: "GET" })
     ]);
     if (customers.error) throw new Error(customers.error.message);
     if (plans.error) throw new Error(plans.error.message);
-    if (payments.error) throw new Error(payments.error.message);
-    return { customers: customers.data as Customer[], plans: plans.data as Plan[], payments: payments.data };
+    if (payments.error && !["42P01", "PGRST205"].includes(payments.error.code)) throw new Error(payments.error.message);
+    return { customers: customers.data as Customer[], plans: plans.data as Plan[], payments: payments.data ?? [] };
   });
 
 export type NewCustomer = {
