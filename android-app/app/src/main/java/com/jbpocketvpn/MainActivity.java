@@ -160,7 +160,7 @@ public final class MainActivity extends Activity {
         try {
             backend.setState(tunnel, Tunnel.State.UP, config);
             showState(Tunnel.State.UP);
-        } catch (BackendException | Exception e) {
+        } catch (Exception e) {
             status.setText("Connection failed: " + e.getMessage());
             status.setTextColor(0xFFFF7777);
         }
