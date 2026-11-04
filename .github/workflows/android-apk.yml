@@ -12,6 +12,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VPN_RELEASE_KEYSTORE_BASE64: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 }}
+      VPN_RELEASE_STORE_PASSWORD: ${{ secrets.VPN_RELEASE_STORE_PASSWORD }}
+      VPN_RELEASE_KEY_ALIAS: ${{ secrets.VPN_RELEASE_KEY_ALIAS }}
+      VPN_RELEASE_KEY_PASSWORD: ${{ secrets.VPN_RELEASE_KEY_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,22 +39,17 @@ jobs:
           path: android-app/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Prepare release signing key
-        if: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 != '' && secrets.VPN_RELEASE_STORE_PASSWORD != '' && secrets.VPN_RELEASE_KEY_ALIAS != '' && secrets.VPN_RELEASE_KEY_PASSWORD != '' }}
-        env:
-          VPN_RELEASE_KEYSTORE_BASE64: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 }}
+        if: ${{ env.VPN_RELEASE_KEYSTORE_BASE64 != '' && env.VPN_RELEASE_STORE_PASSWORD != '' && env.VPN_RELEASE_KEY_ALIAS != '' && env.VPN_RELEASE_KEY_PASSWORD != '' }}
         run: |
           echo "$VPN_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vpn-release.jks"
       - name: Build signed release APK
-        if: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 != '' && secrets.VPN_RELEASE_STORE_PASSWORD != '' && secrets.VPN_RELEASE_KEY_ALIAS != '' && secrets.VPN_RELEASE_KEY_PASSWORD != '' }}
+        if: ${{ env.VPN_RELEASE_KEYSTORE_BASE64 != '' && env.VPN_RELEASE_STORE_PASSWORD != '' && env.VPN_RELEASE_KEY_ALIAS != '' && env.VPN_RELEASE_KEY_PASSWORD != '' }}
         working-directory: android-app
         env:
           VPN_RELEASE_STORE_FILE: ${{ runner.temp }}/vpn-release.jks
-          VPN_RELEASE_STORE_PASSWORD: ${{ secrets.VPN_RELEASE_STORE_PASSWORD }}
-          VPN_RELEASE_KEY_ALIAS: ${{ secrets.VPN_RELEASE_KEY_ALIAS }}
-          VPN_RELEASE_KEY_PASSWORD: ${{ secrets.VPN_RELEASE_KEY_PASSWORD }}
         run: gradle assembleRelease
       - name: Upload signed release APK
-        if: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 != '' && secrets.VPN_RELEASE_STORE_PASSWORD != '' && secrets.VPN_RELEASE_KEY_ALIAS != '' && secrets.VPN_RELEASE_KEY_PASSWORD != '' }}
+        if: ${{ env.VPN_RELEASE_KEYSTORE_BASE64 != '' && env.VPN_RELEASE_STORE_PASSWORD != '' && env.VPN_RELEASE_KEY_ALIAS != '' && env.VPN_RELEASE_KEY_PASSWORD != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: jb-pocket-vpn-signed-release-apk
