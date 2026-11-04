@@ -182,7 +182,7 @@ function Index() {
                 <h3 className="font-display text-2xl font-bold">{p.name}</h3>
                 <div className="mt-5 flex items-end gap-2"><span className="font-display text-5xl font-extrabold">₹{p.price_inr}</span><span className="mb-2 text-sm text-slate-400">/ month</span></div>
                 <div className="mt-6 flex-1 space-y-3 text-sm text-slate-300">{((p.features as string[]) ?? []).map((feature) => <div key={feature} className="flex gap-3"><span className="font-bold text-emerald-300">✓</span><span>{feature}</span></div>)}</div>
-                <button type="button" onClick={() => startUpiPayment({ id: p.id, name: p.name })} className={`mt-8 rounded-xl px-5 py-3 text-center font-bold transition ${p.popular ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300" : "border border-emerald-300/50 text-emerald-200 hover:bg-emerald-300/10"}`}>Pay with UPI</button>
+                {p.price_inr === 0 ? <button type="button" disabled className="mt-8 cursor-not-allowed rounded-xl border border-emerald-300/30 px-5 py-3 text-center font-bold text-emerald-200/70">Free plan · VPN setup pending</button> : <button type="button" onClick={() => startUpiPayment({ id: p.id, name: p.name })} className={`mt-8 rounded-xl px-5 py-3 text-center font-bold transition ${p.popular ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300" : "border border-emerald-300/50 text-emerald-200 hover:bg-emerald-300/10"}`}>Pay with UPI</button>}
               </article>
             ))}
           </div>
