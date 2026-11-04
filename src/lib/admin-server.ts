@@ -169,7 +169,7 @@ export const createPendingUpiOrder = createServerFn({ method: "POST" })
     if (insertError) throw new Error("Could not create payment order: " + insertError.message);
 
     const params = new URLSearchParams({
-      pa: "Paytm.s27xc6j@pty",
+      pa: process.env["UPI_VPA"] || "paytm.s27xc6j@pty",
       pn: "JB Pocket VPN",
       am: String(plan.price_inr),
       cu: "INR",
