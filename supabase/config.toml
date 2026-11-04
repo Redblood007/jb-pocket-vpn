@@ -1,1 +1,6 @@
 project_id = "oogzymjbqlyzdwqhuyrk"
+
+# PhonePe sends server-to-server callbacks without a Supabase user JWT.
+# The function performs its own SHA-256 webhook authentication.
+[functions.phonepe-webhook]
+verify_jwt = false
