@@ -128,7 +128,7 @@ function AdminPage() {
         ) : tab === "plans" ? (
           <PlansTab plans={plans} onSave={(p) => savePlan.mutate({ data: p })} />
         ) : (
-          <PaymentsTab payments={payments} customers={customers} plans={plans} />
+          <PaymentsTab payments={payments} customers={customers} plans={plans} onRefresh={refresh} />
         )}
         <ChangePasswordCard />
       </main>
@@ -140,9 +140,26 @@ type CustomerRow = Awaited<ReturnType<typeof listAdminData>>["customers"][number
 
 type PaymentRow = Awaited<ReturnType<typeof listAdminData>>["payments"][number];
 
-function PaymentsTab({ payments, customers, plans }: { payments: PaymentRow[]; customers: CustomerRow[]; plans: Plan[] }) {
+function PaymentsTab({ payments, customers, plans, onRefresh }: { payments: PaymentRow[]; customers: CustomerRow[]; plans: Plan[]; onRefresh: () => void }) {
+  const [approving, setApproving] = useState<string | null>(null);
   const customerById = new Map(customers.map((customer) => [customer.id, customer]));
   const planById = new Map(plans.map((plan) => [plan.id, plan]));
+
+  async function approvePayment(orderReference: string) {
+    if (!window.confirm("Only approve after matching this UTR and the exact amount in your bank statement. Continue?")) return;
+    setApproving(orderReference);
+    const { error } = await (supabase as any).rpc("admin_approve_manual_upi_payment", {
+      p_order_reference: orderReference,
+      p_review_note: "Bank statement reconciled by admin",
+    });
+    setApproving(null);
+    if (error) {
+      toast.error("Approval failed: " + error.message);
+      return;
+    }
+    toast.success("Payment verified and subscription activated");
+    onRefresh();
+  }
   return (
     <section>
       <h1 className="mb-2 font-display text-2xl font-bold">Payment Orders</h1>
@@ -153,7 +170,7 @@ function PaymentsTab({ payments, customers, plans }: { payments: PaymentRow[]; c
         <div className="overflow-x-auto rounded-2xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-border text-left text-muted-foreground">
-              <th className="px-4 py-3 font-medium">Order</th><th className="px-4 py-3 font-medium">Customer</th><th className="px-4 py-3 font-medium">Plan</th><th className="px-4 py-3 font-medium">Amount</th><th className="px-4 py-3 font-medium">Provider</th><th className="px-4 py-3 font-medium">Status</th><th className="px-4 py-3 font-medium">Created</th>
+              <th className="px-4 py-3 font-medium">Order</th><th className="px-4 py-3 font-medium">Customer</th><th className="px-4 py-3 font-medium">Plan</th><th className="px-4 py-3 font-medium">Amount</th><th className="px-4 py-3 font-medium">Provider</th><th className="px-4 py-3 font-medium">UTR reference</th><th className="px-4 py-3 font-medium">Status</th><th className="px-4 py-3 font-medium">Created</th><th className="px-4 py-3 font-medium">Action</th>
             </tr></thead>
             <tbody>{payments.map((payment) => (
               <tr key={payment.id} className="border-b border-border last:border-0">
@@ -161,9 +178,11 @@ function PaymentsTab({ payments, customers, plans }: { payments: PaymentRow[]; c
                 <td className="px-4 py-3">{customerById.get(payment.customer_id)?.name ?? "Customer"}</td>
                 <td className="px-4 py-3">{planById.get(payment.plan_id)?.name ?? "—"}</td>
                 <td className="px-4 py-3">₹{payment.amount_inr}</td>
-                <td className="px-4 py-3 uppercase text-muted-foreground">{payment.provider}</td>
+                <td className="px-4 py-3">{payment.provider}</td>
+                <td className="px-4 py-3 font-mono text-xs">{payment.utr_reference ?? "—"}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-3 py-1 text-xs font-bold ${payment.status === "paid" ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"}`}>{payment.status}</span></td>
                 <td className="px-4 py-3 text-muted-foreground">{new Date(payment.created_at).toLocaleString()}</td>
+                <td className="px-4 py-3">{payment.provider === "manual" && payment.status === "pending" && payment.utr_reference ? <button disabled={approving === payment.order_reference} onClick={() => approvePayment(payment.order_reference)} className="rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground disabled:opacity-50">{approving === payment.order_reference ? "Approving…" : "Approve after bank match"}</button> : "—"}</td>
               </tr>
             ))}</tbody>
           </table>
