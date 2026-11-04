@@ -4,7 +4,7 @@ JBP Pocket VPN pro version ka sub sa best aur acha rate price may custamer ko mo
 
 This project was built with sahil Beigh
 
-## Build with Lovable
+## Build with Sahil Beigh
 
 Continue developing this project in the Sahil Beigh
 
