@@ -1,12 +1,12 @@
 # JB Pocket Vpn
 
-maja ak vpn bana hai pro version ka sub sa best aur acha rate price may custamer ko monthly plan be
+JBP Pocket VPN pro version ka sub sa best aur acha rate price may custamer ko monthly plan be
 
-This project was built with [Lovable](https://lovable.dev).
+This project was built with sahil Beigh
 
 ## Build with Lovable
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/7de6bf44-481e-41db-9b0a-fae80648c9be).
+Continue developing this project in the Sahil Beigh
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.
