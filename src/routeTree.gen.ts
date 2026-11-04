@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AdminLoginRouteImport } from './routes/admin-login'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'\nimport { Route as SignupRouteImport } from './routes/signup'\nimport { Route as LoginRouteImport } from './routes/login'\nimport { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/_admin/route'
 import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin.admin'
 
@@ -24,7 +24,7 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
+const SignupRoute = SignupRouteImport.update({ id: '/signup', path: '/signup', getParentRoute: () => rootRouteImport } as any)\nconst LoginRoute = LoginRouteImport.update({ id: '/login', path: '/login', getParentRoute: () => rootRouteImport } as any)\nconst CheckoutRoute = CheckoutRouteImport.update({ id: '/checkout', path: '/checkout', getParentRoute: () => rootRouteImport } as any)\nconst AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin-login',
   path: '/admin-login',
   getParentRoute: () => rootRouteImport,
@@ -59,7 +59,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin-login' | '/admin'
+  fullPaths: '/' | '/admin-login' | '/signup' | '/login' | '/checkout' | '/admin'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/admin-login' | '/admin'
   id:
