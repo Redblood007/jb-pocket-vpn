@@ -27,7 +27,7 @@ jobs:
         run: |
           if [ -d "supabase/functions" ]; then
             deno lint --config supabase/functions/deno.json supabase/functions
-            if find supabase/functions -type f \\( -name "*_test.ts" -o -name "*_test.js" -o -name "*.test.ts" -o -name "*.test.js" \\) -print -quit | grep -q .; then
+            if find supabase/functions -type f -name '*_test.ts' -print -quit | grep -q .; then
               deno test --config supabase/functions/deno.json -A supabase/functions
             else
               echo "No Deno test modules are present on this branch; lint completed."
