@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
@@ -80,7 +80,7 @@ export async function phonepeOrderStatus(merchantOrderId: string) {
   return result;
 }
 
-export async function verifyPhonePeWebhook(req: Request, rawBody: string) {
+export async function verifyPhonePeWebhook(req: Request, _rawBody: string) {
   // PhonePe SHA webhook mode: Authorization is SHA256(username:password).
   // HMAC mode is intentionally not accepted by this endpoint; configure SHA mode
   // in PhonePe Developer Settings and use a long random username/password.
