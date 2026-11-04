@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin")({
 });
 
 function AdminPage() {
-  const [tab, setTab] = useState<"customers" | "plans">("customers");
+  const [tab, setTab] = useState<"customers" | "plans" | "payments">("customers");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchAdminData = useServerFn(listAdminData);
@@ -70,7 +70,7 @@ function AdminPage() {
     onSuccess: () => refresh(),
     onError: (e) => toast.error("Update failed: " + e.message),
   });
-  const savePlan = useMutation({
+  const reviewPayment = useMutation({\n    mutationFn: useServerFn(setPaymentOrderStatus),\n    onSuccess: () => { toast.success("Payment status updated"); refresh(); },\n    onError: (e) => toast.error("Payment update failed: " + e.message),\n  });\n  const savePlan = useMutation({
     mutationFn: useServerFn(updatePlan),
     onSuccess: () => {
       toast.success("Plan saved — the website will update too");
@@ -81,7 +81,7 @@ function AdminPage() {
   });
 
   const plans = data?.plans ?? [];
-  const customers = data?.customers ?? [];
+  const customers = data?.customers ?? [];\n  const payments = data?.payments ?? [];
   const planById = new Map<string, Plan>(plans.map((p) => [p.id, p]));
 
   if (isLoading) {
@@ -373,5 +373,46 @@ function ChangePasswordCard() {
         </button>
       )}
     </div>
+  );
+}
+
+
+type PaymentRow = Awaited<ReturnType<typeof listAdminData>>["payments"][number];
+
+function PaymentsTab({ payments, onReview }: {
+  payments: PaymentRow[];
+  onReview: (id: string, status: "paid" | "failed") => void;
+}) {
+  return (
+    <section>
+      <h1 className="font-display text-2xl font-bold">UPI Payments</h1>
+      <p className="mb-5 mt-2 text-sm text-muted-foreground">Check your UPI/bank statement before manually confirming a payment. Opening a UPI app is not proof of payment.</p>
+      {payments.length === 0 ? (
+        <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">No payment orders yet.</div>
+      ) : (
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border text-left text-muted-foreground">
+              <th className="px-4 py-3">Reference</th><th className="px-4 py-3">Customer ID</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Created</th><th className="px-4 py-3">Review</th>
+            </tr></thead>
+            <tbody>{payments.map((payment) => (
+              <tr key={payment.id} className="border-b border-border last:border-0">
+                <td className="px-4 py-3 font-medium">{payment.upi_reference}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{payment.user_id}</td>
+                <td className="px-4 py-3">₹{payment.amount_inr}</td>
+                <td className="px-4 py-3 capitalize">{payment.status}</td>
+                <td className="px-4 py-3">{new Date(payment.created_at).toLocaleString()}</td>
+                <td className="px-4 py-3">{payment.status === "pending" ? (
+                  <div className="flex gap-2">
+                    <button onClick={() => onReview(payment.id, "paid")} className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">Confirm paid</button>
+                    <button onClick={() => onReview(payment.id, "failed")} className="rounded-full border border-border px-3 py-1 text-xs">Mark failed</button>
+                  </div>
+                ) : "—"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
