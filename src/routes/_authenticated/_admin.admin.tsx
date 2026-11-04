@@ -12,6 +12,8 @@ import {
   deleteCustomer,
   setCustomerActive,
   updatePlan,
+  listAdminPayments,
+  approveManualPayment,
   type Plan,
 } from "@/lib/admin-server";
 
@@ -30,10 +32,13 @@ export const Route = createFileRoute("/_authenticated/_admin/admin")({
 });
 
 function AdminPage() {
-  const [tab, setTab] = useState<"customers" | "plans">("customers");
+  const [tab, setTab] = useState<"customers" | "plans" | "payments">("customers");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchAdminData = useServerFn(listAdminData);
+  const fetchPayments = useServerFn(listAdminPayments);
+  const approvePayment = useMutation({ mutationFn: useServerFn(approveManualPayment), onSuccess: () => { toast.success("Manual UPI payment approved"); queryClient.invalidateQueries({ queryKey: ["admin-payments"] }); refresh(); }, onError: (e) => toast.error("Approval failed: " + e.message) });
+  const paymentsQuery = useQuery({ queryKey: ["admin-payments"], queryFn: () => fetchPayments(), enabled: tab === "payments" });
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-data"],
     queryFn: () => fetchAdminData(),
@@ -101,6 +106,7 @@ function AdminPage() {
             <button onClick={() => setTab("customers")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "customers" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
               Customers ({customers.length})
             </button>
+            <button onClick={() => setTab("payments")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "payments" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>Payments</button>
             <button onClick={() => setTab("plans")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "plans" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
               Plans
             </button>
@@ -112,7 +118,9 @@ function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        {tab === "customers" ? (
+        {tab === "payments" ? (
+          <PaymentsTab payments={paymentsQuery.data ?? []} loading={paymentsQuery.isLoading} onApprove={(order_reference) => approvePayment.mutate({ data: { order_reference, review_note: "Bank statement reconciled by admin" } })} approving={approvePayment.isPending} />
+        ) : tab === "customers" ? (
           <CustomersTab
             customers={customers}
             plans={plans}
@@ -373,5 +381,39 @@ function ChangePasswordCard() {
         </button>
       )}
     </div>
+  );
+}
+
+
+function PaymentsTab({ payments, loading, onApprove, approving }: {
+  payments: Array<{ id: string; order_reference: string; amount_inr: number; currency: string; status: string; provider: string; utr_reference: string | null; submitted_at: string | null; created_at: string; expires_at: string }>;
+  loading: boolean;
+  onApprove: (order_reference: string) => void;
+  approving: boolean;
+}) {
+  if (loading) return <div className="py-10 text-center text-muted-foreground">Loading payments...</div>;
+  const pending = payments.filter((p) => p.status === "pending");
+  return (
+    <section>
+      <div className="mb-6 flex items-center justify-between">
+        <div><h1 className="font-display text-2xl font-bold">Payment review</h1><p className="mt-1 text-sm text-muted-foreground">Verify UTR against your bank statement before approving. Never approve from a screenshot alone.</p></div>
+        <span className="rounded-full bg-secondary px-3 py-1 text-sm">{pending.length} pending</span>
+      </div>
+      {payments.length === 0 ? <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">No payment orders yet.</div> : (
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border text-left text-muted-foreground"><th className="px-4 py-3">Order</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3">Provider</th><th className="px-4 py-3">UTR / Txn ref</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Action</th></tr></thead>
+            <tbody>{payments.map((p) => <tr key={p.id} className="border-b border-border last:border-0">
+              <td className="px-4 py-3 font-mono text-xs">{p.order_reference}</td>
+              <td className="px-4 py-3">₹{p.amount_inr}</td>
+              <td className="px-4 py-3">{p.provider}</td>
+              <td className="px-4 py-3 font-mono text-xs">{p.utr_reference || "—"}</td>
+              <td className="px-4 py-3">{p.status}</td>
+              <td className="px-4 py-3">{p.provider === "manual" && p.status === "pending" && p.utr_reference ? <button disabled={approving} onClick={() => onApprove(p.order_reference)} className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground disabled:opacity-50">Approve after bank check</button> : "—"}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }

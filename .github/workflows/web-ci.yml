@@ -1,0 +1,26 @@
+name: Web application checks
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Build website and admin routes
+        run: bun run build
+      - name: Unit tests
+        run: bun run test
+      - name: Lint changed website and admin routes
+        run: bunx eslint src/routes/index.tsx src/routes/_authenticated/_admin.admin.tsx src/lib/admin-server.ts --rule=prettier/prettier:off
