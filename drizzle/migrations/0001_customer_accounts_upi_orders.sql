@@ -16,7 +16,7 @@ create table public.payment_orders (
 );
 
 alter table public.payment_orders enable row level security;
-grant select, insert on public.payment_orders to authenticated;
+grant select, insert, update on public.payment_orders to authenticated;
 grant select, update on public.payment_orders to service_role;
 grant all on public.payment_orders to service_role;
 
