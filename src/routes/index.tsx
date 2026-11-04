@@ -25,8 +25,9 @@ const plansQuery = queryOptions({
 
 const WHATSAPP_NUMBER = "917006269882";
 
-function whatsappLink(planName: string, price: number) {
-  const text = `Hi, I want the ${planName} plan (₹${price}/month).`;
+function whatsappLink(planName: string, price: number, billingPeriod: string) {
+  const periodLabel = billingPeriod === "yearly" ? "year" : "month";
+  const text = `Hi, I want the ${planName} plan (₹${price}/${periodLabel}).`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 
@@ -93,8 +94,8 @@ function Index() {
       </section>
 
       <section id="pricing" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center font-display text-4xl font-bold">Monthly Plans</h2>
-        <p className="mt-3 text-center text-muted-foreground">Best rate, cancel anytime. 7-day money-back guarantee.</p>
+        <h2 className="text-center font-display text-4xl font-bold">Subscription Plans</h2>
+        <p className="mt-3 text-center text-muted-foreground">Choose monthly or yearly billing. Cancel anytime on monthly plans.</p>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {plans.map((p) => (
             <div key={p.id} className={`relative rounded-3xl border p-8 ${p.popular ? "border-primary bg-card shadow-glow" : "border-border bg-card"}`}>
@@ -102,13 +103,13 @@ function Index() {
               <h3 className="font-display text-xl font-bold">{p.name}</h3>
               <div className="mt-4 flex items-end gap-1">
                 <span className="font-display text-5xl font-bold">₹{p.price_inr}</span>
-                <span className="mb-2 text-muted-foreground">/month</span>
+                <span className="mb-2 text-muted-foreground">/{p.billing_period === "yearly" ? "year" : "month"}</span>
               </div>
               <ul className="mt-6 space-y-3 text-sm">
                 {((p.features as string[]) ?? []).map((f) => <li key={f} className="flex gap-2"><span className="text-primary">✓</span>{f}</li>)}
               </ul>
               <a
-                href={whatsappLink(p.name, p.price_inr)}
+                href={whatsappLink(p.name, p.price_inr, p.billing_period)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3 font-bold transition ${p.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border hover:bg-secondary"}`}
