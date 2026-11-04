@@ -29,13 +29,13 @@ function CustomerAccount() {
       }
       const user = authData.user;
       const initialName = String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Customer");
-      const { data, error } = await supabase.from("customer_profiles" as any)
+      const { data, error } = await supabase.from("customer_profiles")
         .upsert({ user_id: user.id, name: initialName, email: user.email ?? "" }, { onConflict: "user_id" })
         .select("name,email")
         .single();
       if (!active) return;
-      setEmail(String((data as any)?.email ?? user.email ?? ""));
-      setName(String((data as any)?.name ?? initialName));
+      setEmail(String(data?.email ?? user.email ?? ""));
+      setName(String(data?.name ?? initialName));
       setStatus(error ? "Your account is signed in, but your profile could not be loaded. Please contact support." : "Your customer profile is ready.");
     }
     void loadProfile();
@@ -52,7 +52,7 @@ function CustomerAccount() {
       await navigate({ to: "/login" });
       return;
     }
-    const { error } = await supabase.from("customer_profiles" as any)
+    const { error } = await supabase.from("customer_profiles")
       .update({ name: name.trim() })
       .eq("user_id", data.user.id);
     setBusy(false);
