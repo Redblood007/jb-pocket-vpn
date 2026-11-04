@@ -181,3 +181,19 @@ export const createPendingUpiOrder = createServerFn({ method: "POST" })
       status: "pending" as const,
     };
   });
+
+
+export const setPaymentOrderStatus = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string; status: "paid" | "failed" }) => input)
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as never as { supabase: any; userId: string };
+    await assertAdmin(supabase, userId);
+    const { error } = await supabase
+      .from("payment_orders")
+      .update({ status: data.status, updated_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("status", "pending");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
