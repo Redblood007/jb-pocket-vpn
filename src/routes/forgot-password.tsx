@@ -19,7 +19,7 @@ function ForgotPassword() {
     setMessage("");
     setError("");
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: window.location.origin + "/reset-password",
+      redirectTo: globalThis.location.origin + "/reset-password",
     });
     setBusy(false);
     if (resetError) setError(resetError.message);
