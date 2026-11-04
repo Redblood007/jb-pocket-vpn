@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin")({
 });
 
 function AdminPage() {
-  const [tab, setTab] = useState<"customers" | "plans">("customers");
+  const [tab, setTab] = useState<"customers" | "plans" | "payments">("customers");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchAdminData = useServerFn(listAdminData);
@@ -82,6 +82,7 @@ function AdminPage() {
 
   const plans = data?.plans ?? [];
   const customers = data?.customers ?? [];
+  const payments = data?.payments ?? [];
   const planById = new Map<string, Plan>(plans.map((p) => [p.id, p]));
 
   if (isLoading) {
@@ -104,6 +105,9 @@ function AdminPage() {
             <button onClick={() => setTab("plans")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "plans" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
               Plans
             </button>
+            <button onClick={() => setTab("payments")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "payments" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
+              Payments ({payments.length})
+            </button>
             <button onClick={handleSignOut} className="rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-secondary">
               Logout
             </button>
@@ -121,8 +125,10 @@ function AdminPage() {
             onDelete={(id) => removeCustomer.mutate({ data: { id } })}
             onToggle={(id, active) => toggleActive.mutate({ data: { id, active } })}
           />
-        ) : (
+        ) : tab === "plans" ? (
           <PlansTab plans={plans} onSave={(p) => savePlan.mutate({ data: p })} />
+        ) : (
+          <PaymentsTab payments={payments} customers={customers} plans={plans} />
         )}
         <ChangePasswordCard />
       </main>
@@ -131,6 +137,41 @@ function AdminPage() {
 }
 
 type CustomerRow = Awaited<ReturnType<typeof listAdminData>>["customers"][number];
+
+type PaymentRow = Awaited<ReturnType<typeof listAdminData>>["payments"][number];
+
+function PaymentsTab({ payments, customers, plans }: { payments: PaymentRow[]; customers: CustomerRow[]; plans: Plan[] }) {
+  const customerById = new Map(customers.map((customer) => [customer.id, customer]));
+  const planById = new Map(plans.map((plan) => [plan.id, plan]));
+  return (
+    <section>
+      <h1 className="mb-2 font-display text-2xl font-bold">Payment Orders</h1>
+      <p className="mb-6 text-sm text-muted-foreground">Latest 100 payment orders. Pending orders do not activate VPN access; only verified payments can do that.</p>
+      {payments.length === 0 ? (
+        <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">No payment orders yet.</div>
+      ) : (
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border text-left text-muted-foreground">
+              <th className="px-4 py-3 font-medium">Order</th><th className="px-4 py-3 font-medium">Customer</th><th className="px-4 py-3 font-medium">Plan</th><th className="px-4 py-3 font-medium">Amount</th><th className="px-4 py-3 font-medium">Provider</th><th className="px-4 py-3 font-medium">Status</th><th className="px-4 py-3 font-medium">Created</th>
+            </tr></thead>
+            <tbody>{payments.map((payment) => (
+              <tr key={payment.id} className="border-b border-border last:border-0">
+                <td className="px-4 py-3 font-mono text-xs">{payment.order_reference}</td>
+                <td className="px-4 py-3">{customerById.get(payment.customer_id)?.name ?? "Customer"}</td>
+                <td className="px-4 py-3">{planById.get(payment.plan_id)?.name ?? "—"}</td>
+                <td className="px-4 py-3">₹{payment.amount_inr}</td>
+                <td className="px-4 py-3 uppercase text-muted-foreground">{payment.provider}</td>
+                <td className="px-4 py-3"><span className={`rounded-full px-3 py-1 text-xs font-bold ${payment.status === "paid" ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"}`}>{payment.status}</span></td>
+                <td className="px-4 py-3 text-muted-foreground">{new Date(payment.created_at).toLocaleString()}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function CustomersTab({
   customers,
@@ -296,7 +337,7 @@ function PlanCard({ plan, onSave }: { plan: Plan; onSave: (p: { id: string; name
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium">Price (₹/month)</label>
+            <label className="mb-1 block text-sm font-medium">Price (₹ for selected billing period)</label>
             <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
           </div>
           <div>
