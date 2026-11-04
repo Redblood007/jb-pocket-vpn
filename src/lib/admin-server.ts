@@ -47,7 +47,7 @@ export const listAdminData = createServerFn({ method: "GET" })
     const [customers, plans, payments] = await Promise.all([
       supabase.from("customers").select("*").order("created_at", { ascending: false }),
       supabase.from("plans").select("*").order("sort_order"),
-      supabase.from("payment_orders").select("id, order_reference, customer_id, plan_id, amount_inr, currency, status, provider, provider_payment_id, paid_at, expires_at, created_at").order("created_at", { ascending: false }).limit(100),
+      supabase.from("payment_orders").select("id, order_reference, customer_id, plan_id, amount_inr, currency, status, provider, provider_payment_id, utr_reference, submitted_at, reviewed_at, paid_at, expires_at, created_at").order("created_at", { ascending: false }).limit(100),
     ]);
     if (customers.error) throw new Error(customers.error.message);
     if (plans.error) throw new Error(plans.error.message);
