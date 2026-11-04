@@ -6,6 +6,14 @@ on:
     paths:
       - "android-app/**"
       - ".github/workflows/android-apk.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: read
 
 jobs:
   build:
