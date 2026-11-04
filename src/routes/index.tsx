@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";\nimport { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { listPublicPlans } from "@/lib/admin-server";
 
 export const Route = createFileRoute("/")({
@@ -120,7 +120,7 @@ function Index() {
         </div>
       </section>
 
-      {authOpen && (\n        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={() => setAuthOpen(false)}>\n          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>\n            <h2 className="font-display text-xl font-bold">Sign in to continue</h2>\n            <p className="mt-2 text-sm text-muted-foreground">Enter your email. We will send you a secure sign-in link before opening PhonePe checkout.</p>\n            <input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="you@example.com" className="mt-4 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:border-primary" />\n            {checkoutMessage && <p className="mt-3 text-sm text-muted-foreground">{checkoutMessage}</p>}\n            <div className="mt-5 flex gap-3">\n              <button type="button" onClick={() => setAuthOpen(false)} className="flex-1 rounded-full border border-border px-4 py-3 text-sm">Cancel</button>\n              <button type="button" disabled={checkoutBusy || !authEmail.includes("@")} onClick={sendLoginLink} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">{checkoutBusy ? "Sending..." : "Send sign-in link"}</button>\n            </div>\n          </div>\n        </div>\n      )}\n\n      {checkoutMessage && !authOpen && <div className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-xl border border-border bg-card px-5 py-3 text-sm shadow-xl">{checkoutMessage}</div>}\n\n      <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
+      <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
         <h2 className="text-center font-display text-4xl font-bold">FAQ</h2>
         <div className="mt-10 space-y-3">
           {faqs.map(([q, a], i) => (
