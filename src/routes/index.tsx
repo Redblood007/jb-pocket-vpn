@@ -7,9 +7,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "JB Pocket VPN — Fast, Private, Affordable" },
-      { name: "description", content: "JB Pocket VPN: 60+ countries, no-logs, unlimited speed. Monthly plans starting at just ₹99." },
+      { name: "description", content: "JB Pocket VPN uses WireGuard technology. Explore available plans and manage your VPN service." },
       { property: "og:title", content: "JB Pocket VPN — Fast, Private, Affordable" },
-      { property: "og:description", content: "Unlimited, no-logs VPN with monthly plans from ₹99." },
+      { property: "og:description", content: "WireGuard-based VPN service with account and plan management." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -32,12 +32,12 @@ function whatsappLink(planName: string, price: number, billingPeriod: string) {
 }
 
 const features = [
-  ["⚡", "Super fast", "10 Gbps servers, no speed limit."],
-  ["🔒", "Military-grade encryption", "AES-256 + WireGuard protocol."],
-  ["🌍", "60+ countries", "Connect anywhere in one tap."],
-  ["🚫", "Strict no-logs", "Your activity is never stored."],
-  ["📺", "Streaming ready", "Watch your shows without buffering."],
-  ["📱", "All devices", "Android, iPhone, Windows, Mac."],
+  ["🔐", "WireGuard protocol", "Modern VPN tunnelling through the official WireGuard library."],
+  ["📱", "Native Android app", "Import a WireGuard profile and use Android's VPN permission flow."],
+  ["🛡️", "Local profile handling", "The current Android MVP imports your tunnel profile on-device."],
+  ["👤", "Customer management", "Admin tools for customer records and account status."],
+  ["📋", "Plan management", "Manage service plans from the authenticated admin panel."],
+  ["💳", "Payment review", "Review submitted manual UPI payment references in the admin panel."],
 ];
 
 const faqs = [
@@ -62,9 +62,9 @@ function Index() {
       </header>
 
       <section className="bg-glow px-6 pb-24 pt-20 text-center">
-        <p className="mx-auto mb-6 w-fit rounded-full border border-border px-4 py-1 text-xs text-primary">● 1M+ users protected</p>
+        <p className="mx-auto mb-6 w-fit rounded-full border border-border px-4 py-1 text-xs text-primary">● WireGuard-powered VPN</p>
         <h1 className="mx-auto max-w-3xl font-display text-5xl font-bold leading-tight md:text-7xl">
-          Make your internet <span className="text-primary">safe</span> and <span className="text-accent">fast</span>
+          Connect with <span className="text-primary">WireGuard</span> and stay in control
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
           JB Pocket VPN — affordable monthly plans, starting at just ₹99. No contract.
@@ -74,8 +74,8 @@ function Index() {
           <a href="#features" className="rounded-full border border-border px-8 py-4 font-medium hover:bg-secondary">Features</a>
         </div>
         <div className="mx-auto mt-16 grid max-w-3xl grid-cols-3 gap-6">
-          {[["60+", "Countries"], ["3000+", "Servers"], ["99.9%", "Uptime"]].map(([v, l]) => (
-            <div key={l}><div className="font-display text-3xl font-bold text-primary">{v}</div><div className="text-sm text-muted-foreground">{l}</div></div>
+          {[["WireGuard", "VPN protocol"], ["Android", "Native app"], ["Admin", "Plan controls"]].map(([v, l]) => (
+            <div key={l}><div className="font-display text-xl font-bold text-primary">{v}</div><div className="text-sm text-muted-foreground">{l}</div></div>
           ))}
         </div>
       </section>
