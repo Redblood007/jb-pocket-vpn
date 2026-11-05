@@ -224,26 +224,61 @@ public final class MainActivity extends Activity {
         try {
             if (backend.getState(tunnel) == Tunnel.State.UP) {
                 backend.setState(tunnel, Tunnel.State.DOWN, null);
-                showState(Tunnel.State.DOWN);
+                Tunnel.State actualState = backend.getState(tunnel);
+                showState(actualState);
+                if (actualState != Tunnel.State.DOWN) {
+                    throw new IllegalStateException("WireGuard did not confirm disconnection");
+                }
             } else {
                 Intent permission = VpnService.prepare(this);
                 if (permission != null) startActivityForResult(permission, REQUEST_VPN_PERMISSION);
                 else startTunnel();
             }
         } catch (Exception e) {
-            status.setText("VPN error: " + e.getMessage());
-            status.setTextColor(Color.rgb(255, 119, 119));
+            showConnectionError("VPN operation failed");
+            Toast.makeText(this, safeErrorMessage(e), Toast.LENGTH_LONG).show();
         }
     }
 
     private void startTunnel() {
+        if (config == null) {
+            showConnectionError("WIREGUARD PROFILE REQUIRED");
+            return;
+        }
         try {
             backend.setState(tunnel, Tunnel.State.UP, config);
-            showState(Tunnel.State.UP);
+            Tunnel.State actualState = backend.getState(tunnel);
+            showState(actualState);
+            if (actualState != Tunnel.State.UP) {
+                throw new IllegalStateException("WireGuard did not confirm the tunnel is up");
+            }
         } catch (Exception e) {
-            status.setText("Connection failed");
-            status.setTextColor(Color.rgb(255, 119, 119));
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            showConnectionError("CONNECTION FAILED");
+            Toast.makeText(this, safeErrorMessage(e), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void showConnectionError(String message) {
+        status.setText(message);
+        status.setTextColor(Color.rgb(255, 119, 119));
+        connectButton.setText("CONNECT");
+    }
+
+    private String safeErrorMessage(Exception error) {
+        String message = error.getMessage();
+        return message == null || message.trim().isEmpty()
+                ? error.getClass().getSimpleName()
+                : message;
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (backend != null && tunnel != null && status != null) {
+            try {
+                showState(backend.getState(tunnel));
+            } catch (Exception e) {
+                showConnectionError("STATUS UNAVAILABLE");
+            }
         }
     }
 
