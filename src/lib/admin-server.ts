@@ -45,7 +45,7 @@ export const listAdminData = createServerFn({ method: "GET" })
     };
     await assertAdmin(supabase, userId);
     const [customers, plans] = await Promise.all([
-      supabase.from("customers").select("id,name,phone,email,plan_id,vpn_username,started_on,notes,active,created_at").order("created_at", { ascending: false }),
+      supabase.from("customers").select("id,name,phone,email,plan_id,vpn_username,started_on,notes,active,created_at,updated_at").order("created_at", { ascending: false }),
       supabase.from("plans").select("*").order("sort_order"),
     ]);
     if (customers.error) throw new Error(customers.error.message);
