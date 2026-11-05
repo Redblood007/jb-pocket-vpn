@@ -151,12 +151,12 @@ function CustomersTab({
   customers: CustomerRow[];
   plans: Plan[];
   planById: Map<string, Plan>;
-  onAdd: (c: { name: string; phone?: string; email?: string; plan_id?: string; vpn_username?: string; vpn_password?: string; started_on?: string; notes?: string }) => void;
+  onAdd: (c: { name: string; phone?: string; email?: string; plan_id?: string; vpn_username?: string; started_on?: string; notes?: string }) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, active: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", plan_id: "", vpn_username: "", vpn_password: "", started_on: "", notes: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", plan_id: "", vpn_username: "", started_on: "", notes: "" });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -183,7 +183,7 @@ function CustomersTab({
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Phone</th>
                 <th className="px-4 py-3 font-medium">Plan</th>
-                <th className="px-4 py-3 font-medium">VPN login</th>
+                <th className="px-4 py-3 font-medium">VPN username</th>
                 <th className="px-4 py-3 font-medium">Start</th>
                 <th className="px-4 py-3 font-medium">Active</th>
                 <th className="px-4 py-3 font-medium"></th>
@@ -195,7 +195,7 @@ function CustomersTab({
                   <td className="px-4 py-3 font-medium">{c.name}{c.notes ? <div className="text-xs text-muted-foreground">{c.notes}</div> : null}</td>
                   <td className="px-4 py-3 text-muted-foreground">{c.phone || "—"}</td>
                   <td className="px-4 py-3">{c.plan_id ? (planById.get(c.plan_id)?.name ?? "—") : "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.vpn_username ? `${c.vpn_username} / ${c.vpn_password || ""}` : "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{c.vpn_username || "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{c.started_on}</td>
                   <td className="px-4 py-3">
                     <button
@@ -240,7 +240,6 @@ function CustomersTab({
                 </select>
               </div>
               <Field label="VPN username" value={form.vpn_username} onChange={set("vpn_username")} />
-              <Field label="VPN password" value={form.vpn_password} onChange={set("vpn_password")} />
               <Field label="Start date" value={form.started_on} onChange={set("started_on")} type="date" />
               <Field label="Note (optional)" value={form.notes} onChange={set("notes")} />
             </div>
@@ -250,7 +249,7 @@ function CustomersTab({
                 onClick={() => {
                   if (!form.name.trim()) { toast.error("Name is required"); return; }
                   onAdd({ ...form, name: form.name.trim() });
-                  setForm({ name: "", phone: "", email: "", plan_id: "", vpn_username: "", vpn_password: "", started_on: "", notes: "" });
+                  setForm({ name: "", phone: "", email: "", plan_id: "", vpn_username: "", started_on: "", notes: "" });
                   setOpen(false);
                 }}
                 className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground hover:opacity-90"
