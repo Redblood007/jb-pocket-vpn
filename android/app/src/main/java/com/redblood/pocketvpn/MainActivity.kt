@@ -6,11 +6,18 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.content.Intent
+import android.net.VpnService
+import android.net.Uri
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import com.wireguard.android.backend.GoBackend
+import com.wireguard.android.backend.Tunnel
+import com.wireguard.config.Config
+import java.util.concurrent.Executors
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
@@ -22,6 +29,19 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var serverValue: TextView
     private var selectedServer = "Auto · Best location"
+    private var wireGuardConfig: Config? = null
+    private var wireGuardBackend: GoBackend? = null
+    private val vpnExecutor = Executors.newSingleThreadExecutor()
+    private val wireGuardTunnel = object : Tunnel {
+        override fun getName(): String = "jb-pocket-vpn"
+        override fun onStateChange(newState: Tunnel.State) {
+            runOnUiThread {
+                status.text = if (newState == Tunnel.State.UP) "Connected" else "Not connected"
+            }
+        }
+    }
+    private val configPickerRequest = 4101
+    private val vpnPermissionRequest = 4102
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,7 +102,12 @@ class MainActivity : Activity() {
         hero.addView(label("VPN is not connected; traffic is not protected", 13f, muted, false))
         hero.addView(space(18))
         val connect = actionButton("CONNECT")
-        connect.setOnClickListener { showSetupNotice() }
+        connect.setOnClickListener { toggleVpn() }
+        val importConfig = actionButton("IMPORT WIREGUARD CONFIG")
+        importConfig.setTextColor(Color.WHITE)
+        importConfig.background = shape(Color.rgb(35, 54, 76), 18)
+        importConfig.setOnClickListener { openConfigPicker() }
+        hero.addView(importConfig, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(10) })
         hero.addView(connect, LinearLayout.LayoutParams(-1, dp(54)))
         root.addView(hero)
         root.addView(space(18))
@@ -126,6 +151,102 @@ class MainActivity : Activity() {
         root.addView(space(20))
         root.addView(label("JB POCKET VPN  •  BUILT FOR YOUR PRIVACY", 10f, muted, true).apply { gravity = Gravity.CENTER })
         return scroll
+    }
+
+
+    private fun toggleVpn() {
+        val backend = wireGuardBackend
+        if (backend != null && wireGuardConfig != null) {
+            vpnExecutor.execute {
+                try {
+                    if (backend.getState(wireGuardTunnel) == Tunnel.State.UP) {
+                        backend.setState(wireGuardTunnel, Tunnel.State.DOWN, null)
+                    } else {
+                        requestVpnPermissionAndStart()
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread { showVpnError(e) }
+                }
+            }
+            return
+        }
+        if (wireGuardConfig == null) {
+            AlertDialog.Builder(this)
+                .setTitle("WireGuard configuration needed")
+                .setMessage("Import the client .conf file created for your JB Pocket VPN server. The configuration contains private credentials and stays inside this app.")
+                .setPositiveButton("IMPORT") { _, _ -> openConfigPicker() }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
+
+    private fun openConfigPicker() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        startActivityForResult(intent, configPickerRequest)
+    }
+
+    @Deprecated("Legacy result API used for broad Android compatibility")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != Activity.RESULT_OK || data?.data == null) return
+        if (requestCode == configPickerRequest) {
+            val uri: Uri = data.data!!
+            vpnExecutor.execute {
+                try {
+                    val parsed = contentResolver.openInputStream(uri)?.use { Config.parse(it) }
+                        ?: throw IllegalStateException("Could not open the selected configuration file")
+                    if (parsed.peers.isEmpty()) throw IllegalArgumentException("The configuration has no WireGuard peer")
+                    wireGuardConfig = parsed
+                    wireGuardBackend = GoBackend(applicationContext)
+                    runOnUiThread {
+                        status.text = "Configuration imported"
+                        AlertDialog.Builder(this)
+                            .setTitle("Configuration imported")
+                            .setMessage("Your WireGuard client configuration is loaded. Tap CONNECT to request Android VPN permission and start the tunnel.")
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread { showVpnError(e) }
+                }
+            }
+        } else if (requestCode == vpnPermissionRequest) {
+            if (resultCode == Activity.RESULT_OK) startWireGuardTunnel()
+            else runOnUiThread { status.text = "VPN permission not granted" }
+        }
+    }
+
+    private fun requestVpnPermissionAndStart() {
+        val permissionIntent = VpnService.prepare(this)
+        if (permissionIntent != null) {
+            runOnUiThread { startActivityForResult(permissionIntent, vpnPermissionRequest) }
+        } else {
+            startWireGuardTunnel()
+        }
+    }
+
+    private fun startWireGuardTunnel() {
+        val config = wireGuardConfig ?: return
+        vpnExecutor.execute {
+            try {
+                val backend = wireGuardBackend ?: GoBackend(applicationContext).also { wireGuardBackend = it }
+                backend.setState(wireGuardTunnel, Tunnel.State.UP, config)
+            } catch (e: Exception) {
+                runOnUiThread { showVpnError(e) }
+            }
+        }
+    }
+
+    private fun showVpnError(error: Exception) {
+        status.text = "Connection failed"
+        AlertDialog.Builder(this)
+            .setTitle("VPN connection failed")
+            .setMessage(error.message ?: "Check the imported WireGuard configuration and server availability.")
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     private fun chooseServer() {
