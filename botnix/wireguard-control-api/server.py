@@ -23,7 +23,7 @@ SUBNET = ipaddress.ip_network(os.environ.get("WG_CLIENT_SUBNET", "10.66.66.0/24"
 SERVER_IP = ipaddress.ip_address(os.environ.get("WG_SERVER_IP", "10.66.66.1"))
 DB_PATH = Path(os.environ.get("WG_PEER_DB", "/var/lib/jb-pocket-vpn/peers.sqlite3"))
 PUBLIC_KEY_RE = re.compile(r"^[A-Za-z0-9+/]{43}=$")
-ENDPOINT_RE = re.compile(r"^[A-Za-z0-9.-]+:\\d{1,5}$")
+ENDPOINT_RE = re.compile(r"^[A-Za-z0-9.-]+:\d{1,5}$")
 
 if not PUBLIC_KEY_RE.fullmatch(subprocess.run(
     ["wg", "show", INTERFACE, "public-key"], check=True, capture_output=True, text=True
