@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
 export type Plan = Database["public"]["Tables"]["plans"]["Row"];
-export type Customer = Database["public"]["Tables"]["customers"]["Row"];
+export type Customer = Omit<Database["public"]["Tables"]["customers"]["Row"], "vpn_password">;
 
 /** Public plan list for the homepage — anonymous, publishable client only. */
 export const listPublicPlans = createServerFn({ method: "GET" }).handler(async () => {
@@ -45,7 +45,7 @@ export const listAdminData = createServerFn({ method: "GET" })
     };
     await assertAdmin(supabase, userId);
     const [customers, plans] = await Promise.all([
-      supabase.from("customers").select("*").order("created_at", { ascending: false }),
+      supabase.from("customers").select("id,name,phone,email,plan_id,vpn_username,started_on,notes,active,created_at").order("created_at", { ascending: false }),
       supabase.from("plans").select("*").order("sort_order"),
     ]);
     if (customers.error) throw new Error(customers.error.message);
@@ -59,7 +59,6 @@ export type NewCustomer = {
   email?: string;
   plan_id?: string | null;
   vpn_username?: string;
-  vpn_password?: string;
   started_on?: string;
   notes?: string;
 };
@@ -76,7 +75,8 @@ export const createCustomer = createServerFn({ method: "POST" })
       email: data.email || null,
       plan_id: data.plan_id || null,
       vpn_username: data.vpn_username || null,
-      vpn_password: data.vpn_password || null,
+      // VPN credentials are provisioned as WireGuard keys; never store user passwords here.
+      vpn_password: null,
       started_on: data.started_on || undefined,
       notes: data.notes || null,
     });
