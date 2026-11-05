@@ -47,9 +47,7 @@ The function also uses the project's existing `SUPABASE_URL`,
 `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` secrets.
 
 The Free plan is provisioned without a paid subscription row. Its device count
-comes from the `free` plan record. The current Free daily allowance is 100 MiB
-(104,857,600 bytes); enforcement still requires server-side traffic accounting
-against WireGuard transfer counters.
+comes from the `free` plan record. The current Free daily allowance is 100 MB (100,000,000 bytes); enforcement still requires server-side traffic accounting against WireGuard transfer counters.
 
 
 ## Botnix installation (Ubuntu 24.04)
@@ -100,3 +98,19 @@ working public endpoint.
 
 This bridge only provisions peers. A separate server-side usage collector and
 traffic policy are still required to enforce the Free plan's daily 100 MiB cap.
+
+
+## One-command installer
+
+From this directory on the Botnix Ubuntu 24.04 server, run:
+
+```bash
+sudo bash install.sh YOUR_REAL_VPN_HOSTNAME_OR_IP:51820
+```
+
+The installer refuses to proceed unless `wg0` is already active. It installs
+the API and systemd unit, generates a 256-bit random bearer token, stores the
+token in root-only files, starts the service, and checks the loopback health
+endpoint. It does **not** configure Cloudflare Tunnel or Supabase secrets; those
+must be connected after the server-side health check. Keep the token private
+and never add it to the Android app or Git repository.
