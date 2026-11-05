@@ -137,6 +137,9 @@ Deno.serve(async (req: Request) => {
       peerId = peer.id;
     }
 
+    const provisionedPeerId = peerId;
+    if (!provisionedPeerId) throw new Error("VPN device ID was not created");
+
     const apiUrl = new URL(env("BOTNIX_WG_API_URL"));
     if (apiUrl.protocol !== "https:") throw new Error("Botnix WireGuard API must use HTTPS");
     const response = await fetch(apiUrl, {
@@ -144,10 +147,10 @@ Deno.serve(async (req: Request) => {
       headers: {
         "Authorization": `Bearer ${env("BOTNIX_WG_API_TOKEN")}`,
         "Content-Type": "application/json",
-        "Idempotency-Key": peerId,
+        "Idempotency-Key": provisionedPeerId,
       },
       body: JSON.stringify({
-        peer_id: peerId,
+        peer_id: provisionedPeerId,
         customer_id: customer.id,
         public_key: publicKey,
         device_name: deviceName,
