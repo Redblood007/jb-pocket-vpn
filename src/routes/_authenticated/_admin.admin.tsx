@@ -20,10 +20,10 @@ import {
 export const Route = createFileRoute("/_authenticated/_admin/admin")({
   head: () => ({
     meta: [
-      { title: "Admin Panel — ShieldX VPN Pro" },
-      { name: "description", content: "ShieldX VPN Pro admin panel." },
-      { property: "og:title", content: "Admin Panel — ShieldX VPN Pro" },
-      { property: "og:description", content: "ShieldX VPN Pro admin panel." },
+      { title: "Admin Panel — JB Pocket VPN" },
+      { name: "description", content: "JB Pocket VPN admin panel." },
+      { property: "og:title", content: "Admin Panel — JB Pocket VPN" },
+      { property: "og:description", content: "JB Pocket VPN admin panel." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -101,7 +101,7 @@ function AdminPage() {
       <Toaster />
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-display text-lg font-bold">🛡️ ShieldX <span className="text-primary">Admin</span></span>
+          <span className="font-display text-lg font-bold">🛡️ JB Pocket VPN <span className="text-primary">Admin</span></span>
           <div className="flex items-center gap-3">
             <button onClick={() => setTab("customers")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "customers" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
               Customers ({customers.length})
