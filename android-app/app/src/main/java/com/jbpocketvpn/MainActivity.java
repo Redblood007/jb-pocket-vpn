@@ -47,6 +47,7 @@ public final class MainActivity extends Activity {
             }
         };
         buildUi();
+        restoreSavedProfile();
     }
 
     private int dp(float value) {
@@ -192,20 +193,32 @@ public final class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         startActivityForResult(intent, REQUEST_CONFIG_FILE);
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CONFIG_FILE && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    getContentResolver().openInputStream(data.getData()), StandardCharsets.UTF_8))) {
-                config = Config.parse(reader);
+            try {
+                getContentResolver().takePersistableUriPermission(
+                        data.getData(),
+                        data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION
+                );
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        getContentResolver().openInputStream(data.getData()), StandardCharsets.UTF_8))) {
+                    config = Config.parse(reader);
+                }
+                getSharedPreferences("vpn_profile", MODE_PRIVATE)
+                        .edit()
+                        .putString("config_uri", data.getData().toString())
+                        .apply();
                 profileStatus.setText("WireGuard profile imported • Ready to connect");
                 profileStatus.setTextColor(Color.rgb(83, 230, 160));
                 Toast.makeText(this, "WireGuard profile imported", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 config = null;
+                getSharedPreferences("vpn_profile", MODE_PRIVATE).edit().remove("config_uri").apply();
                 profileStatus.setText("Could not read this config file");
                 profileStatus.setTextColor(Color.rgb(255, 119, 119));
                 Toast.makeText(this, "Invalid WireGuard config: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -217,6 +230,28 @@ public final class MainActivity extends Activity {
                 showConnectionError("VPN PERMISSION REQUIRED");
                 Toast.makeText(this, "Allow the Android VPN permission to connect.", Toast.LENGTH_LONG).show();
             }
+        }
+    }
+
+    /**
+     * Restore access to the user's selected document without copying its private key
+     * into app storage. Android's persisted document permission survives app restarts.
+     */
+    private void restoreSavedProfile() {
+        String savedUri = getSharedPreferences("vpn_profile", MODE_PRIVATE)
+                .getString("config_uri", null);
+        if (savedUri == null) return;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                getContentResolver().openInputStream(android.net.Uri.parse(savedUri)),
+                StandardCharsets.UTF_8))) {
+            config = Config.parse(reader);
+            profileStatus.setText("Saved WireGuard profile • Ready to connect");
+            profileStatus.setTextColor(Color.rgb(83, 230, 160));
+        } catch (Exception e) {
+            config = null;
+            getSharedPreferences("vpn_profile", MODE_PRIVATE).edit().remove("config_uri").apply();
+            profileStatus.setText("Saved profile unavailable • Import again");
+            profileStatus.setTextColor(Color.rgb(255, 119, 119));
         }
     }
 
