@@ -211,8 +211,12 @@ public final class MainActivity extends Activity {
                 Toast.makeText(this, "Invalid WireGuard config: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         } else if (requestCode == REQUEST_VPN_PERMISSION) {
-            if (resultCode == RESULT_OK) startTunnel();
-            else Toast.makeText(this, "VPN permission was not granted", Toast.LENGTH_LONG).show();
+            if (resultCode == RESULT_OK) {
+                startTunnel();
+            } else {
+                showConnectionError("VPN PERMISSION REQUIRED");
+                Toast.makeText(this, "Allow the Android VPN permission to connect.", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
