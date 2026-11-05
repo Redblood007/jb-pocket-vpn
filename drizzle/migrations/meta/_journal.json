@@ -15,6 +15,13 @@
       "when": 1793203193723,
       "tag": "0001_admin_plans_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793897285414,
+      "tag": "0002_create_customer_profiles",
+      "breakpoints": true
     }
   ]
 }

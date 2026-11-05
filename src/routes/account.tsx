@@ -28,7 +28,7 @@ function CustomerAccount() {
         return;
       }
       const user = authData.user;
-      const initialName = String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Customer");
+      const initialName = String(user.user_metadata?.["full_name"] ?? user.user_metadata?.["name"] ?? user.email?.split("@")[0] ?? "Customer");
       const { data, error } = await supabase.from("customer_profiles")
         .upsert({ user_id: user.id, name: initialName, email: user.email ?? "" }, { onConflict: "user_id" })
         .select("name,email")
