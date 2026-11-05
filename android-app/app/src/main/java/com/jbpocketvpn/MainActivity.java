@@ -105,9 +105,9 @@ public final class MainActivity extends Activity {
         brand.setOrientation(LinearLayout.VERTICAL);
         brand.setPadding(dp(12), 0, 0, 0);
         brand.addView(text("JB POCKET VPN", 18, Color.WHITE, true));
-        brand.addView(text("PRIVATE • FAST • SECURE", 10, Color.rgb(143, 160, 184), true));
+        brand.addView(text("100 MB / DAY • AD SUPPORTED", 10, Color.rgb(143, 160, 184), true));
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
-        TextView pro = text("PRO", 11, Color.rgb(83, 230, 160), true);
+        TextView pro = text("FREE", 11, Color.rgb(83, 230, 160), true);
         pro.setPadding(dp(12), dp(7), dp(12), dp(7));
         pro.setBackground(rounded(Color.rgb(20, 49, 43), 20));
         header.addView(pro);
