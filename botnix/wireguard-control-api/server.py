@@ -9,6 +9,7 @@ import os
 import re
 import sqlite3
 import subprocess
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -46,6 +47,7 @@ db.execute("""CREATE TABLE IF NOT EXISTS peers (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 )""")
 db.commit()
+db_lock = threading.Lock()
 
 
 def allocate_ip(connection: sqlite3.Connection) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
@@ -96,7 +98,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(public_key, str) or not PUBLIC_KEY_RE.fullmatch(public_key):
                 raise ValueError("invalid_public_key")
 
-            with db:
+            with db_lock, db:
                 row = db.execute(
                     "SELECT public_key, assigned_ip FROM peers WHERE peer_id = ?", (peer_id,)
                 ).fetchone()
