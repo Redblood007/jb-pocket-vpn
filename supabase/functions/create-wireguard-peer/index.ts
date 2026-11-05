@@ -178,7 +178,7 @@ Deno.serve(async (req: Request) => {
         ? serverResult.persistent_keepalive
         : 25,
       plan: plan.slug,
-      daily_limit_bytes: plan.slug === "free" ? 104857600 : null,
+      daily_limit_bytes: plan.slug === "free" ? 100000000 : null,
     });
   } catch (error) {
     console.error("create-wireguard-peer failed", error instanceof Error ? error.message : "unknown error");
