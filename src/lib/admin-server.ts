@@ -106,6 +106,33 @@ export const setCustomerActive = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Public: a visitor requests the free 100 MB plan without logging in.
+ *  Saves the request as an inactive customer so the admin can activate it manually. */
+export const requestFreeAccess = createServerFn({ method: "POST" })
+  .inputValidator((input: { name: string; phone: string }) => input)
+  .handler(async ({ data }) => {
+    const name = data.name?.trim();
+    const phone = data.phone?.trim();
+    if (!name || name.length < 2) throw new Error("Please enter your name.");
+    if (!phone || phone.replace(/\D/g, "").length < 10) throw new Error("Please enter a valid phone number.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: freePlan, error: planError } = await supabaseAdmin
+      .from("plans")
+      .select("id")
+      .eq("slug", "free")
+      .maybeSingle();
+    if (planError) throw new Error(planError.message);
+    const { error } = await supabaseAdmin.from("customers").insert({
+      name,
+      phone,
+      plan_id: freePlan?.id ?? null,
+      active: false,
+      notes: "Free 100 MB request from website (no login)",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export type PlanUpdate = {
   id: string;
   name: string;
