@@ -41,9 +41,9 @@ const features = [
 ];
 
 const faqs = [
-  ["Can I cancel anytime?", "Yes. Monthly plans have no contract — cancel any time."],
-  ["Is there a money-back guarantee?", "Yes, 7-day full refund if you're not happy."],
-  ["Which payment methods?", "UPI, cards and net banking."],
+  ["What is included in the Free plan?", "The current Free plan includes 100 MB per day, ad-supported access, one device and a daily data reset."],
+  ["How do I connect on Android?", "Import your WireGuard configuration file in the JB Pocket VPN Android app, then approve Android's VPN permission."],
+  ["Where can I manage plans and customers?", "Authorized administrators can manage plans, customer records and manual UPI payment reviews in the admin panel."],
 ];
 
 function Index() {
@@ -67,7 +67,7 @@ function Index() {
           Connect with <span className="text-primary">WireGuard</span> and stay in control
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-          JB Pocket VPN — affordable monthly plans, starting at just ₹99. No contract.
+          Start with the Free plan: 100 MB per day, ad-supported access and one device. Paid plans are also available.
         </p>
         <div className="mt-10 flex justify-center gap-4">
           <a href="#pricing" className="rounded-full bg-primary px-8 py-4 font-bold text-primary-foreground shadow-glow transition hover:scale-105">See Plans</a>
