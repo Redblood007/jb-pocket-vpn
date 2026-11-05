@@ -29,7 +29,9 @@ jobs:
           deno lint --config supabase/functions/deno.json supabase/functions/create-wireguard-peer/index.ts
           deno check --config supabase/functions/deno.json supabase/functions/create-wireguard-peer/index.ts
       - name: Validate Botnix peer API syntax
-        run: python -m py_compile botnix/wireguard-control-api/server.py
+        run: |
+          python -m py_compile botnix/wireguard-control-api/server.py
+          bash -n botnix/wireguard-control-api/install.sh
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
