@@ -22,6 +22,9 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Validate Botnix WireGuard API Python syntax
+        run: python -m py_compile botnix/wireguard-control-api/server.py
+
       - name: Lint and test Supabase Edge Functions
         shell: bash
         run: |
