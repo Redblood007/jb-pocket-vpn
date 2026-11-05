@@ -47,16 +47,13 @@ function toBase64(bytes: Uint8Array) {
 }
 
 async function createWireGuardKeyPair() {
-  if (!("X25519" in crypto.subtle)) {
-    throw new Error("This browser cannot safely create WireGuard keys. Please use the JB Pocket VPN Android app when it is available.");
-  }
   const pair = await crypto.subtle.generateKey({ name: "X25519" } as AlgorithmIdentifier, true, ["deriveBits"]) as CryptoKeyPair;
   const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
   const privateJwk = await crypto.subtle.exportKey("jwk", pair.privateKey);
   if (!publicJwk.x || !privateJwk.d) throw new Error("Could not export the WireGuard key pair.");
   return { publicKey: toBase64(toBase64UrlBytes(publicJwk.x)), privateKey: toBase64(toBase64UrlBytes(privateJwk.d)) };
 }
-\ntype ManualUpiOrder = {
+type ManualUpiOrder = {
   orderReference: string;
   amountInr: number;
   currency: "INR";
@@ -156,7 +153,7 @@ function Index() {
         `AllowedIPs = ${data.allowed_ips ?? "0.0.0.0/0, ::/0"}`,
         `PersistentKeepalive = ${data.persistent_keepalive ?? 25}`,
         "",
-      ].join("\\n");
+      ].join("\n");
       setFreeSetup({ config, assignedIp: data.assigned_ip, endpoint: data.endpoint, dailyLimitBytes: data.daily_limit_bytes ?? 100000000 });
     } catch (error) {
       setFreeSetupError(error instanceof Error ? error.message : "Free setup failed. Please try again.");
