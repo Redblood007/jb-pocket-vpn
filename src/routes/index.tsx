@@ -31,7 +31,32 @@ const plansQuery = queryOptions({
   },
 });
 
-type ManualUpiOrder = {
+
+type FreeVpnSetup = { config: string; assignedIp: string; endpoint: string; dailyLimitBytes: number };
+
+function toBase64UrlBytes(value: string) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+  return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
+}
+
+function toBase64(bytes: Uint8Array) {
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+async function createWireGuardKeyPair() {
+  if (!("X25519" in crypto.subtle)) {
+    throw new Error("This browser cannot safely create WireGuard keys. Please use the JB Pocket VPN Android app when it is available.");
+  }
+  const pair = await crypto.subtle.generateKey({ name: "X25519" } as AlgorithmIdentifier, true, ["deriveBits"]) as CryptoKeyPair;
+  const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
+  const privateJwk = await crypto.subtle.exportKey("jwk", pair.privateKey);
+  if (!publicJwk.x || !privateJwk.d) throw new Error("Could not export the WireGuard key pair.");
+  return { publicKey: toBase64(toBase64UrlBytes(publicJwk.x)), privateKey: toBase64(toBase64UrlBytes(privateJwk.d)) };
+}
+\ntype ManualUpiOrder = {
   orderReference: string;
   amountInr: number;
   currency: "INR";
@@ -69,6 +94,9 @@ function Index() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [submittingUtr, setSubmittingUtr] = useState(false);
   const [utrSubmitted, setUtrSubmitted] = useState(false);
+  const [freeSetup, setFreeSetup] = useState<FreeVpnSetup | null>(null);
+  const [freeSetupError, setFreeSetupError] = useState<string | null>(null);
+  const [creatingFreeSetup, setCreatingFreeSetup] = useState(false);
   const { data: plans } = useSuspenseQuery(plansQuery);
 
   async function startUpiPayment(plan: { id: string; name: string }) {
@@ -93,6 +121,48 @@ function Index() {
       return;
     }
     setPaymentOrder(data as ManualUpiOrder);
+  }
+
+  async function startFreeSetup() {
+    setCreatingFreeSetup(true);
+    setFreeSetupError(null);
+    setFreeSetup(null);
+    try {
+      let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!sessionData.session) {
+        const result = await supabase.auth.signInAnonymously();
+        if (result.error) {
+          throw new Error("Free guest access is not enabled on the server yet. Please contact the administrator.");
+        }
+        sessionData = { session: result.data.session };
+      }
+      const keys = await createWireGuardKeyPair();
+      const { data, error } = await supabase.functions.invoke("create-wireguard-peer", {
+        body: { public_key: keys.publicKey, device_name: "Android browser device" },
+      });
+      if (error || !data?.endpoint || !data?.server_public_key || !data?.assigned_ip) {
+        throw new Error(data?.error ?? error?.message ?? "The VPN server could not prepare your free device.");
+      }
+      const config = [
+        "[Interface]",
+        `PrivateKey = ${keys.privateKey}`,
+        `Address = ${data.assigned_ip}`,
+        `DNS = ${data.dns ?? "1.1.1.1, 1.0.0.1"}`,
+        "",
+        "[Peer]",
+        `PublicKey = ${data.server_public_key}`,
+        `Endpoint = ${data.endpoint}`,
+        `AllowedIPs = ${data.allowed_ips ?? "0.0.0.0/0, ::/0"}`,
+        `PersistentKeepalive = ${data.persistent_keepalive ?? 25}`,
+        "",
+      ].join("\\n");
+      setFreeSetup({ config, assignedIp: data.assigned_ip, endpoint: data.endpoint, dailyLimitBytes: data.daily_limit_bytes ?? 100000000 });
+    } catch (error) {
+      setFreeSetupError(error instanceof Error ? error.message : "Free setup failed. Please try again.");
+    } finally {
+      setCreatingFreeSetup(false);
+    }
   }
 
   async function submitUtr() {
@@ -182,7 +252,7 @@ function Index() {
                 <h3 className="font-display text-2xl font-bold">{p.name}</h3>
                 <div className="mt-5 flex items-end gap-2"><span className="font-display text-5xl font-extrabold">₹{p.price_inr}</span><span className="mb-2 text-sm text-slate-400">/ month</span></div>
                 <div className="mt-6 flex-1 space-y-3 text-sm text-slate-300">{((p.features as string[]) ?? []).map((feature) => <div key={feature} className="flex gap-3"><span className="font-bold text-emerald-300">✓</span><span>{feature}</span></div>)}</div>
-                <button type="button" onClick={() => startUpiPayment({ id: p.id, name: p.name })} className={`mt-8 rounded-xl px-5 py-3 text-center font-bold transition ${p.popular ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300" : "border border-emerald-300/50 text-emerald-200 hover:bg-emerald-300/10"}`}>Pay with UPI</button>
+                {p.slug === "free" ? <button type="button" onClick={() => void startFreeSetup()} disabled={creatingFreeSetup} className="mt-8 rounded-xl bg-emerald-400 px-5 py-3 text-center font-bold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-60">{creatingFreeSetup ? "Preparing free access…" : "Get Free 100 MB"}</button> : <button type="button" onClick={() => startUpiPayment({ id: p.id, name: p.name })} className={`mt-8 rounded-xl px-5 py-3 text-center font-bold transition ${p.popular ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300" : "border border-emerald-300/50 text-emerald-200 hover:bg-emerald-300/10"}`}>Pay with UPI</button>}
               </article>
             ))}
           </div>
@@ -190,6 +260,26 @@ function Index() {
         </div>
       </section>
 
+      {(freeSetupError || freeSetup) && <section className="mx-auto max-w-3xl px-5 pb-10 sm:px-8" aria-live="polite">
+        <div className="rounded-2xl border border-emerald-300/30 bg-[#0a172b] p-6">
+          {freeSetupError && <p className="text-sm text-amber-200">{freeSetupError}</p>}
+          {freeSetup && <>
+            <h2 className="text-xl font-bold text-emerald-200">Free device prepared</h2>
+            <p className="mt-2 text-sm text-slate-300">Device IP: {freeSetup.assignedIp} · Daily allowance: 100 MB</p>
+            <p className="mt-2 text-sm text-amber-200">Your WireGuard configuration contains a private key. Keep it private and do not share it.</p>
+            <button type="button" onClick={() => {
+              const blob = new Blob([freeSetup.config], { type: "text/plain" });
+              const url = URL.createObjectURL(blob);
+              const anchor = document.createElement("a");
+              anchor.href = url;
+              anchor.download = "JB-Pocket-VPN-Free.conf";
+              anchor.click();
+              URL.revokeObjectURL(url);
+            }} className="mt-4 rounded-xl bg-emerald-400 px-5 py-3 font-bold text-slate-950">Download WireGuard configuration</button>
+            <p className="mt-3 text-xs leading-5 text-slate-400">Open the WireGuard app, import this configuration, and activate the tunnel. The website cannot switch on Android VPN permission itself. The 100 MB quota still requires server-side traffic enforcement before it can be guaranteed.</p>
+          </>}
+        </div>
+      </section>}
       <section id="features" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
         <div className="text-center"><p className="text-sm font-bold uppercase tracking-[.24em] text-emerald-300">Why JB Pocket VPN</p><h2 className="mt-3 font-display text-4xl font-extrabold">Built around <span className="text-emerald-300">your privacy</span></h2></div>
         <div className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">{benefits.map((item) => <article key={item.title} className="rounded-2xl border border-slate-700/70 bg-gradient-to-b from-[#101e35] to-[#091326] p-6"><div className="text-3xl">{item.icon}</div><h3 className="mt-5 text-lg font-bold">{item.title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{item.text}</p></article>)}</div>
