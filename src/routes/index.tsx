@@ -6,9 +6,9 @@ import { listPublicPlans } from "@/lib/admin-server";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ShieldX VPN Pro — Fast, Private, Affordable" },
-      { name: "description", content: "ShieldX VPN Pro: 60+ countries, no-logs, unlimited speed. Monthly plans starting at just ₹99." },
-      { property: "og:title", content: "ShieldX VPN Pro — Fast, Private, Affordable" },
+      { title: "JB Pocket VPN — Fast, Private, Affordable" },
+      { name: "description", content: "JB Pocket VPN: 60+ countries, no-logs, unlimited speed. Monthly plans starting at just ₹99." },
+      { property: "og:title", content: "JB Pocket VPN — Fast, Private, Affordable" },
       { property: "og:description", content: "Unlimited, no-logs VPN with monthly plans from ₹99." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -52,7 +52,7 @@ function Index() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <span className="font-display text-xl font-bold">🛡️ ShieldX <span className="text-primary">Pro</span></span>
+        <span className="font-display text-xl font-bold">🛡️ JB Pocket VPN</span>
         <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#pricing" className="hover:text-foreground">Pricing</a>
@@ -67,7 +67,7 @@ function Index() {
           Make your internet <span className="text-primary">safe</span> and <span className="text-accent">fast</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-          Best VPN Pro — affordable monthly plans, starting at just ₹99. No contract.
+          JB Pocket VPN — affordable monthly plans, starting at just ₹99. No contract.
         </p>
         <div className="mt-10 flex justify-center gap-4">
           <a href="#pricing" className="rounded-full bg-primary px-8 py-4 font-bold text-primary-foreground shadow-glow transition hover:scale-105">See Plans</a>
@@ -81,7 +81,7 @@ function Index() {
       </section>
 
       <section id="features" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center font-display text-4xl font-bold">Why ShieldX Pro?</h2>
+        <h2 className="text-center font-display text-4xl font-bold">Why JB Pocket VPN?</h2>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map(([i, t, d]) => (
             <div key={t} className="rounded-2xl border border-border bg-card p-6">
@@ -136,7 +136,7 @@ function Index() {
       </section>
 
       <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
-        © 2026 ShieldX VPN Pro. All rights reserved. · <Link to="/admin-login" className="hover:text-foreground">Admin</Link>
+        © 2026 JB Pocket VPN. All rights reserved. · <Link to="/admin-login" className="hover:text-foreground">Admin</Link>
       </footer>
     </div>
   );
