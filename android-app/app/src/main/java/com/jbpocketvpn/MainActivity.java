@@ -1,330 +1,218 @@
 package com.jbpocketvpn;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.VpnService;
 import android.graphics.Color;
-import android.graphics.Insets;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
-import android.view.WindowInsets;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.wireguard.android.backend.GoBackend;
 import com.wireguard.android.backend.Tunnel;
 import com.wireguard.config.Config;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 public final class MainActivity extends Activity {
-    private static final int REQUEST_VPN_PERMISSION = 41;
-    private static final int REQUEST_CONFIG_FILE = 42;
-
+    private static final int VPN_PERMISSION = 41, CONFIG_FILE = 42;
+    private static final int BG = Color.rgb(7, 5, 20), PANEL = Color.rgb(25, 19, 47);
+    private static final int PURPLE = Color.rgb(174, 77, 255), MUTED = Color.rgb(174, 166, 202);
     private GoBackend backend;
     private Tunnel tunnel;
     private Config config;
-    private TextView status;
-    private TextView profileStatus;
+    private TextView status, profileStatus, serverName, serverFlag, downloadValue, uploadValue, pingValue;
     private Button connectButton;
     private String tunnelName = "JB Pocket VPN";
+    private String selectedServer = "India – Mumbai";
+    private String selectedFlag = "🇮🇳";
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         backend = new GoBackend(getApplicationContext());
         tunnel = new Tunnel() {
             @Override public String getName() { return tunnelName; }
-            @Override public void onStateChange(State newState) {
-                runOnUiThread(() -> showState(newState));
-            }
+            @Override public void onStateChange(State newState) { runOnUiThread(() -> showState(newState)); }
         };
         buildUi();
         restoreSavedProfile();
     }
 
-    private int dp(float value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    private int dp(float n) { return (int)(n * getResources().getDisplayMetrics().density + .5f); }
+    private GradientDrawable shape(int color, int radius, int stroke) {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(color); d.setCornerRadius(dp(radius));
+        if (stroke != 0) d.setStroke(dp(1), stroke);
+        return d;
     }
-
-    private GradientDrawable rounded(int color, int radius) {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(color);
-        drawable.setCornerRadius(dp(radius));
-        return drawable;
+    private GradientDrawable gradient(int a, int b, int radius, int stroke) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{a,b});
+        d.setCornerRadius(dp(radius)); if (stroke != 0) d.setStroke(dp(1), stroke); return d;
     }
-
-    private TextView text(String value, int size, int color, boolean bold) {
-        TextView view = new TextView(this);
-        view.setText(value);
-        view.setTextSize(size);
-        view.setTextColor(color);
-        if (bold) view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        return view;
+    private TextView txt(String s, int size, int color, boolean bold) {
+        TextView t = new TextView(this); t.setText(s); t.setTextSize(size); t.setTextColor(color);
+        if (bold) t.setTypeface(Typeface.DEFAULT, Typeface.BOLD); return t;
     }
+    private LinearLayout column() { LinearLayout l = new LinearLayout(this); l.setOrientation(1); return l; }
+    private LinearLayout row() { LinearLayout l = new LinearLayout(this); l.setOrientation(0); l.setGravity(Gravity.CENTER_VERTICAL); return l; }
+    private LinearLayout.LayoutParams lp(int w, int h) { return new LinearLayout.LayoutParams(w < 0 ? w : dp(w), h < 0 ? h : dp(h)); }
+    private void gap(LinearLayout parent, int height) { parent.addView(new TextView(this), lp(1,height)); }
 
-    private LinearLayout.LayoutParams params(int width, int height) {
-        return new LinearLayout.LayoutParams(width < 0 ? width : dp(width), height < 0 ? height : dp(height));
+    private TextView pill(String s, int color) {
+        TextView t = txt(s, 11, color, true); t.setGravity(Gravity.CENTER);
+        t.setPadding(dp(12),dp(7),dp(12),dp(7)); t.setBackground(shape(Color.rgb(39,25,67),24,Color.rgb(100,55,150))); return t;
+    }
+    private LinearLayout panel(int pad, int stroke) {
+        LinearLayout l = column(); l.setPadding(dp(pad),dp(pad),dp(pad),dp(pad));
+        l.setBackground(shape(PANEL,20,stroke)); return l;
+    }
+    private TextView actionTile(String icon, String title, String sub) {
+        TextView t = txt(icon + "\n" + title + "\n" + sub, 13, Color.WHITE, true);
+        t.setGravity(Gravity.CENTER); t.setLineSpacing(dp(3),1f); t.setPadding(dp(5),dp(12),dp(5),dp(12));
+        t.setBackground(gradient(Color.rgb(48,26,78),Color.rgb(24,18,44),18,Color.rgb(91,48,139)));
+        return t;
     }
 
     private void buildUi() {
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(true);
-        scroll.setBackgroundColor(Color.rgb(8, 14, 29));
-        scroll.setOnApplyWindowInsetsListener((view, insets) -> {
-            if (android.os.Build.VERSION.SDK_INT >= 30) {
-                Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
-                view.setPadding(0, bars.top, 0, bars.bottom);
-            } else {
-                view.setPadding(0, insets.getSystemWindowInsetTop(), 0, insets.getSystemWindowInsetBottom());
-            }
-            return insets;
-        });
+        ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setBackgroundColor(BG);
+        LinearLayout root = column(); root.setPadding(dp(18),dp(22),dp(18),dp(20)); scroll.addView(root);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(28), dp(22), dp(28));
-        scroll.addView(root);
+        LinearLayout header = row();
+        TextView menu = txt("☰",25,Color.WHITE,true); menu.setGravity(Gravity.CENTER); header.addView(menu,lp(34,48));
+        TextView shield = txt("♛\nJK",17,Color.WHITE,true); shield.setGravity(Gravity.CENTER);
+        shield.setBackground(gradient(Color.rgb(92,37,160),Color.rgb(35,17,75),15,PURPLE));
+        LinearLayout.LayoutParams sh=lp(52,56); sh.leftMargin=dp(7); header.addView(shield,sh);
+        LinearLayout brand = column(); brand.setPadding(dp(10),0,0,0);
+        brand.addView(txt("JK Pocket VPN",19,Color.WHITE,true));
+        brand.addView(txt("✦  Fast • Secure • Unlimited",11,Color.rgb(196,153,255),true));
+        header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
+        TextView premium = pill("♛ PREMIUM",Color.rgb(255,211,111)); header.addView(premium);
+        root.addView(header,lp(-1,60));
 
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setOrientation(LinearLayout.HORIZONTAL);
-        TextView logo = text("✦", 25, Color.rgb(83, 230, 160), true);
-        logo.setGravity(Gravity.CENTER);
-        logo.setBackground(rounded(Color.rgb(22, 43, 52), 14));
-        header.addView(logo, params(48, 48));
-
-        LinearLayout brand = new LinearLayout(this);
-        brand.setOrientation(LinearLayout.VERTICAL);
-        brand.setPadding(dp(12), 0, 0, 0);
-        brand.addView(text("JB POCKET VPN", 18, Color.WHITE, true));
-        brand.addView(text("100 MB / DAY • AD SUPPORTED", 10, Color.rgb(143, 160, 184), true));
-        header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
-        TextView pro = text("FREE", 11, Color.rgb(83, 230, 160), true);
-        pro.setPadding(dp(12), dp(7), dp(12), dp(7));
-        pro.setBackground(rounded(Color.rgb(20, 49, 43), 20));
-        header.addView(pro);
-        root.addView(header, params(-1, 52));
-
-        TextView headline = text("Your privacy,\nyour connection.", 30, Color.WHITE, true);
-        headline.setLineSpacing(dp(3), 1f);
-        LinearLayout.LayoutParams headlineParams = params(-1, -2);
-        headlineParams.topMargin = dp(42);
-        root.addView(headline, headlineParams);
-        TextView description = text("Connect securely through your WireGuard VPN.", 14, Color.rgb(153, 168, 190), false);
-        LinearLayout.LayoutParams descriptionParams = params(-1, -2);
-        descriptionParams.topMargin = dp(10);
-        root.addView(description, descriptionParams);
-
-        LinearLayout statusCard = new LinearLayout(this);
-        statusCard.setOrientation(LinearLayout.VERTICAL);
-        statusCard.setPadding(dp(18), dp(18), dp(18), dp(18));
-        statusCard.setBackground(rounded(Color.rgb(17, 27, 47), 20));
-        LinearLayout.LayoutParams cardParams = params(-1, -2);
-        cardParams.topMargin = dp(34);
-        root.addView(statusCard, cardParams);
-
-        TextView label = text("CONNECTION STATUS", 11, Color.rgb(143, 160, 184), true);
-        statusCard.addView(label);
-        status = text("DISCONNECTED", 21, Color.rgb(255, 203, 107), true);
-        LinearLayout.LayoutParams statusParams = params(-1, -2);
-        statusParams.topMargin = dp(10);
-        statusCard.addView(status, statusParams);
-        profileStatus = text("No WireGuard profile imported", 13, Color.rgb(153, 168, 190), false);
-        LinearLayout.LayoutParams profileParams = params(-1, -2);
-        profileParams.topMargin = dp(8);
-        statusCard.addView(profileStatus, profileParams);
-
-        connectButton = new Button(this);
-        connectButton.setText("CONNECT");
-        connectButton.setAllCaps(false);
-        connectButton.setTextSize(17);
-        connectButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        connectButton.setTextColor(Color.rgb(5, 25, 20));
-        connectButton.setBackground(rounded(Color.rgb(83, 230, 160), 16));
-        connectButton.setElevation(dp(3));
-        LinearLayout.LayoutParams connectParams = params(-1, 58);
-        connectParams.topMargin = dp(24);
-        root.addView(connectButton, connectParams);
+        LinearLayout hero = column(); hero.setGravity(Gravity.CENTER); hero.setPadding(0,dp(12),0,dp(8));
+        TextView globe = txt("✧   ·  ·  ·  WORLD NETWORK  ·  ·  ·   ✧",12,Color.rgb(183,105,255),true);
+        globe.setGravity(Gravity.CENTER); hero.addView(globe,lp(-1,38));
+        connectButton = new Button(this); connectButton.setText("⏻\nTap to Connect"); connectButton.setAllCaps(false);
+        connectButton.setTextSize(19); connectButton.setTypeface(Typeface.DEFAULT,Typeface.BOLD); connectButton.setTextColor(Color.WHITE);
+        connectButton.setBackground(gradient(Color.rgb(84,35,142),Color.rgb(24,13,48),150,Color.rgb(208,117,255)));
+        connectButton.setElevation(dp(10)); hero.addView(connectButton,lp(190,190));
         connectButton.setOnClickListener(v -> toggleTunnel());
+        status = pill("●  NOT CONNECTED",Color.rgb(255,120,142));
+        LinearLayout.LayoutParams st=lp(-2,42); st.topMargin=dp(15); hero.addView(status,st);
+        root.addView(hero);
 
-        Button importButton = new Button(this);
-        importButton.setText("Import WireGuard profile");
-        importButton.setAllCaps(false);
-        importButton.setTextSize(14);
-        importButton.setTextColor(Color.WHITE);
-        importButton.setBackground(rounded(Color.rgb(28, 42, 66), 16));
-        LinearLayout.LayoutParams importParams = params(-1, 52);
-        importParams.topMargin = dp(12);
-        root.addView(importButton, importParams);
-        importButton.setOnClickListener(v -> openConfigPicker());
+        LinearLayout server = panel(15,Color.rgb(139,65,218));
+        LinearLayout serverRow = row();
+        serverFlag=txt(selectedFlag,28,Color.WHITE,true); serverRow.addView(serverFlag,lp(46,44));
+        LinearLayout serverInfo=column(); serverInfo.setPadding(dp(10),0,0,0);
+        serverName=txt(selectedServer,17,Color.WHITE,true); serverInfo.addView(serverName);
+        serverInfo.addView(txt("▮▮▮  BEST SPEED",11,Color.rgb(75,239,170),true));
+        serverRow.addView(serverInfo,new LinearLayout.LayoutParams(0,-2,1));
+        TextView choose=txt("⌄",25,Color.WHITE,true); serverRow.addView(choose);
+        server.addView(serverRow); server.setOnClickListener(v -> chooseServer());
+        root.addView(server,lp(-1,-2));
+        TextView importLink=txt("＋ Import WireGuard profile",12,Color.rgb(200,156,255),true);
+        importLink.setGravity(Gravity.CENTER); importLink.setPadding(0,dp(10),0,dp(2));
+        importLink.setOnClickListener(v -> openConfigPicker()); server.addView(importLink);
 
-        LinearLayout info = new LinearLayout(this);
-        info.setOrientation(LinearLayout.VERTICAL);
-        info.setPadding(dp(16), dp(16), dp(16), dp(16));
-        info.setBackground(rounded(Color.rgb(13, 22, 39), 16));
-        LinearLayout.LayoutParams infoParams = params(-1, -2);
-        infoParams.topMargin = dp(28);
-        root.addView(info, infoParams);
-        info.addView(text("HOW TO CONNECT", 12, Color.rgb(83, 230, 160), true));
-        TextView steps = text("1. Import your .conf file from WireGuard\n2. Tap Connect and approve Android VPN permission\n3. Tap Disconnect when you are finished", 13, Color.rgb(177, 190, 210), false);
-        steps.setLineSpacing(dp(7), 1f);
-        LinearLayout.LayoutParams stepsParams = params(-1, -2);
-        stepsParams.topMargin = dp(12);
-        info.addView(steps, stepsParams);
+        gap(root,14);
+        LinearLayout stats=panel(12,Color.rgb(63,45,100)); stats.setOrientation(0);
+        downloadValue=txt("↓  0.00 Mbps\nDownload",12,Color.WHITE,true);
+        uploadValue=txt("↑  0.00 Mbps\nUpload",12,Color.WHITE,true);
+        pingValue=txt("∿  -- ms\nPing",12,Color.WHITE,true);
+        stats.addView(downloadValue,new LinearLayout.LayoutParams(0,-2,1));
+        stats.addView(uploadValue,new LinearLayout.LayoutParams(0,-2,1));
+        stats.addView(pingValue,new LinearLayout.LayoutParams(0,-2,1)); root.addView(stats);
 
-        TextView footer = text("WireGuard tunnel • Profile stays on this device", 11, Color.rgb(112, 130, 155), false);
-        footer.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams footerParams = params(-1, -2);
-        footerParams.topMargin = dp(28);
-        root.addView(footer, footerParams);
+        gap(root,14);
+        LinearLayout plans=row();
+        TextView free=actionTile("ϟ","Free Plan","100 MB / Day");
+        TextView pro=actionTile("♛","Premium","Unlimited");
+        TextView reward=actionTile("🎁","Earn Reward","Watch & Earn");
+        LinearLayout.LayoutParams tile=new LinearLayout.LayoutParams(0,dp(100),1); tile.setMargins(dp(3),0,dp(3),0);
+        plans.addView(free,tile); plans.addView(pro,tile); plans.addView(reward,tile); root.addView(plans);
 
+        gap(root,12);
+        LinearLayout tools=row();
+        String[][] items={{"▤","All Servers"},{"◴","Speed Test"},{"♢","IP Check"},{"▦","More"}};
+        for(String[] item:items){ TextView t=txt(item[0]+"\n"+item[1],12,Color.WHITE,true); t.setGravity(Gravity.CENTER);
+            t.setBackground(shape(Color.rgb(27,22,49),16,Color.rgb(57,45,88)));
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(76),1); p.setMargins(dp(3),0,dp(3),0); tools.addView(t,p);
+            t.setOnClickListener(v -> { if(item[1].equals("All Servers")) chooseServer(); else Toast.makeText(this,item[1]+" will be available in a later app update.",Toast.LENGTH_SHORT).show(); });
+        }
+        root.addView(tools);
+        gap(root,14);
+        profileStatus=txt("WireGuard profile: not imported",11,MUTED,false); profileStatus.setGravity(Gravity.CENTER); root.addView(profileStatus,lp(-1,25));
+
+        LinearLayout nav=panel(10,Color.rgb(76,54,116)); nav.setOrientation(0);
+        String[] navs={"⌂\nHome","♛\nPlans","♧\nRewards","♙\nProfile"};
+        for(int i=0;i<navs.length;i++){ TextView n=txt(navs[i],12,i==0?Color.rgb(204,140,255):MUTED,true); n.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(54),1); nav.addView(n,p); }
+        root.addView(nav,lp(-1,74));
         setContentView(scroll);
     }
 
+    private void chooseServer() {
+        String[] names={"🇮🇳  India – Mumbai","🇮🇳  India – Delhi","🇸🇬  Singapore","🇺🇸  United States","🇬🇧  United Kingdom","🇩🇪  Germany"};
+        String[] flags={"🇮🇳","🇮🇳","🇸🇬","🇺🇸","🇬🇧","🇩🇪"};
+        String[] clean={"India – Mumbai","India – Delhi","Singapore","United States","United Kingdom","Germany"};
+        new AlertDialog.Builder(this).setTitle("Choose VPN location").setItems(names,(d,which)->{
+            selectedServer=clean[which]; selectedFlag=flags[which]; serverName.setText(selectedServer); serverFlag.setText(selectedFlag);
+            Toast.makeText(this,"Selected "+selectedServer+". A matching server profile is still required.",Toast.LENGTH_LONG).show();
+        }).setNegativeButton("Cancel",null).show();
+    }
+
     private void openConfigPicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        startActivityForResult(intent, REQUEST_CONFIG_FILE);
+        Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT); i.addCategory(Intent.CATEGORY_OPENABLE); i.setType("*/*");
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(i,CONFIG_FILE);
     }
-
-    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CONFIG_FILE && resultCode == RESULT_OK && data != null && data.getData() != null) {
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data) {
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode==CONFIG_FILE && resultCode==RESULT_OK && data!=null && data.getData()!=null) {
             try {
-                getContentResolver().takePersistableUriPermission(
-                        data.getData(),
-                        data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION
-                );
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                        getContentResolver().openInputStream(data.getData()), StandardCharsets.UTF_8))) {
-                    config = Config.parse(reader);
-                }
-                getSharedPreferences("vpn_profile", MODE_PRIVATE)
-                        .edit()
-                        .putString("config_uri", data.getData().toString())
-                        .apply();
-                profileStatus.setText("WireGuard profile imported • Ready to connect");
-                profileStatus.setTextColor(Color.rgb(83, 230, 160));
-                Toast.makeText(this, "WireGuard profile imported", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                config = null;
-                getSharedPreferences("vpn_profile", MODE_PRIVATE).edit().remove("config_uri").apply();
-                profileStatus.setText("Could not read this config file");
-                profileStatus.setTextColor(Color.rgb(255, 119, 119));
-                Toast.makeText(this, "Invalid WireGuard config: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        } else if (requestCode == REQUEST_VPN_PERMISSION) {
-            if (resultCode == RESULT_OK) {
-                startTunnel();
-            } else {
-                showConnectionError("VPN PERMISSION REQUIRED");
-                Toast.makeText(this, "Allow the Android VPN permission to connect.", Toast.LENGTH_LONG).show();
-            }
+                getContentResolver().takePersistableUriPermission(data.getData(),data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                try(BufferedReader r=new BufferedReader(new InputStreamReader(getContentResolver().openInputStream(data.getData()),StandardCharsets.UTF_8))){config=Config.parse(r);}
+                getSharedPreferences("vpn_profile",MODE_PRIVATE).edit().putString("config_uri",data.getData().toString()).apply();
+                profileStatus.setText("✓ WireGuard profile imported • Ready to connect");
+                Toast.makeText(this,"WireGuard profile imported",Toast.LENGTH_SHORT).show();
+            } catch(Exception e) { config=null; profileStatus.setText("Could not read WireGuard profile"); Toast.makeText(this,"Invalid config: "+safeErrorMessage(e),Toast.LENGTH_LONG).show(); }
+        } else if(requestCode==VPN_PERMISSION) {
+            if(resultCode==RESULT_OK) startTunnel(); else showConnectionError("VPN permission required");
         }
     }
-
-    /**
-     * Restore access to the user's selected document without copying its private key
-     * into app storage. Android's persisted document permission survives app restarts.
-     */
     private void restoreSavedProfile() {
-        String savedUri = getSharedPreferences("vpn_profile", MODE_PRIVATE)
-                .getString("config_uri", null);
-        if (savedUri == null) return;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                getContentResolver().openInputStream(android.net.Uri.parse(savedUri)),
-                StandardCharsets.UTF_8))) {
-            config = Config.parse(reader);
-            profileStatus.setText("Saved WireGuard profile • Ready to connect");
-            profileStatus.setTextColor(Color.rgb(83, 230, 160));
-        } catch (Exception e) {
-            config = null;
-            getSharedPreferences("vpn_profile", MODE_PRIVATE).edit().remove("config_uri").apply();
-            profileStatus.setText("Saved profile unavailable • Import again");
-            profileStatus.setTextColor(Color.rgb(255, 119, 119));
-        }
+        String uri=getSharedPreferences("vpn_profile",MODE_PRIVATE).getString("config_uri",null); if(uri==null)return;
+        try(BufferedReader r=new BufferedReader(new InputStreamReader(getContentResolver().openInputStream(android.net.Uri.parse(uri)),StandardCharsets.UTF_8))){
+            config=Config.parse(r); profileStatus.setText("✓ Saved WireGuard profile • Ready to connect");
+        } catch(Exception e){config=null;getSharedPreferences("vpn_profile",MODE_PRIVATE).edit().remove("config_uri").apply();}
     }
-
     private void toggleTunnel() {
-        if (config == null) {
-            Toast.makeText(this, "Import your WireGuard .conf file first.", Toast.LENGTH_LONG).show();
-            return;
-        }
+        if(config==null){Toast.makeText(this,"Import a valid WireGuard .conf profile first.",Toast.LENGTH_LONG).show();openConfigPicker();return;}
         try {
-            if (backend.getState(tunnel) == Tunnel.State.UP) {
-                backend.setState(tunnel, Tunnel.State.DOWN, null);
-                Tunnel.State actualState = backend.getState(tunnel);
-                showState(actualState);
-                if (actualState != Tunnel.State.DOWN) {
-                    throw new IllegalStateException("WireGuard did not confirm disconnection");
-                }
-            } else {
-                Intent permission = VpnService.prepare(this);
-                if (permission != null) startActivityForResult(permission, REQUEST_VPN_PERMISSION);
-                else startTunnel();
-            }
-        } catch (Exception e) {
-            showConnectionError("VPN operation failed");
-            Toast.makeText(this, safeErrorMessage(e), Toast.LENGTH_LONG).show();
-        }
+            if(backend.getState(tunnel)==Tunnel.State.UP){backend.setState(tunnel,Tunnel.State.DOWN,null);showState(backend.getState(tunnel));}
+            else {Intent p=VpnService.prepare(this);if(p!=null)startActivityForResult(p,VPN_PERMISSION);else startTunnel();}
+        } catch(Exception e){showConnectionError("CONNECTION FAILED");Toast.makeText(this,safeErrorMessage(e),Toast.LENGTH_LONG).show();}
     }
-
     private void startTunnel() {
-        if (config == null) {
-            showConnectionError("WIREGUARD PROFILE REQUIRED");
-            return;
-        }
-        try {
-            backend.setState(tunnel, Tunnel.State.UP, config);
-            Tunnel.State actualState = backend.getState(tunnel);
-            showState(actualState);
-            if (actualState != Tunnel.State.UP) {
-                throw new IllegalStateException("WireGuard did not confirm the tunnel is up");
-            }
-        } catch (Exception e) {
-            showConnectionError("CONNECTION FAILED");
-            Toast.makeText(this, safeErrorMessage(e), Toast.LENGTH_LONG).show();
-        }
+        if(config==null){showConnectionError("PROFILE REQUIRED");return;}
+        try {backend.setState(tunnel,Tunnel.State.UP,config);Tunnel.State s=backend.getState(tunnel);showState(s);
+            if(s!=Tunnel.State.UP)throw new IllegalStateException("WireGuard did not confirm connection");
+        } catch(Exception e){showConnectionError("CONNECTION FAILED");Toast.makeText(this,safeErrorMessage(e),Toast.LENGTH_LONG).show();}
     }
-
-    private void showConnectionError(String message) {
-        status.setText(message);
-        status.setTextColor(Color.rgb(255, 119, 119));
-        connectButton.setText("CONNECT");
-    }
-
-    private String safeErrorMessage(Exception error) {
-        String message = error.getMessage();
-        return message == null || message.trim().isEmpty()
-                ? error.getClass().getSimpleName()
-                : message;
-    }
-
-    @Override protected void onResume() {
-        super.onResume();
-        if (backend != null && tunnel != null && status != null) {
-            try {
-                showState(backend.getState(tunnel));
-            } catch (Exception e) {
-                showConnectionError("STATUS UNAVAILABLE");
-            }
-        }
-    }
-
-    private void showState(Tunnel.State state) {
-        boolean up = state == Tunnel.State.UP;
-        status.setText(up ? "CONNECTED" : "DISCONNECTED");
-        status.setTextColor(up ? Color.rgb(83, 230, 160) : Color.rgb(255, 203, 107));
-        connectButton.setText(up ? "DISCONNECT" : "CONNECT");
+    private void showConnectionError(String s){status.setText("●  "+s);status.setTextColor(Color.rgb(255,110,130));connectButton.setText("⏻\nTap to Connect");}
+    private String safeErrorMessage(Exception e){return e.getMessage()==null?e.getClass().getSimpleName():e.getMessage();}
+    @Override protected void onResume(){super.onResume();if(backend!=null&&tunnel!=null&&status!=null)try{showState(backend.getState(tunnel));}catch(Exception e){showConnectionError("STATUS UNAVAILABLE");}}
+    private void showState(Tunnel.State s) {
+        boolean up=s==Tunnel.State.UP; status.setText(up?"●  CONNECTED":"●  NOT CONNECTED");
+        status.setTextColor(up?Color.rgb(72,240,165):Color.rgb(255,120,145));
+        connectButton.setText(up?"⏻\nTap to Disconnect":"⏻\nTap to Connect");
     }
 }
