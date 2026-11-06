@@ -121,6 +121,19 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const publisherId = import.meta.env.VITE_ADSENSE_PUBLISHER_ID as string | undefined;
+    if (!publisherId || !/^ca-pub-\\d{16}$/.test(publisherId)) return;
+    if (document.querySelector('script[data-jb-adsense="true"]')) return;
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.dataset.jbAdsense = "true";
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${publisherId}`;
+    document.head.appendChild(script);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
