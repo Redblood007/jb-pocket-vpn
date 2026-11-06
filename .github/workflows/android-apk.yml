@@ -1,0 +1,82 @@
+name: Build JB Pocket VPN Android APK
+
+on:
+  push:
+    branches: [main, android-native-integration]
+    paths:
+      - "android-app/**"
+      - "botnix/wireguard-control-api/**"
+      - "supabase/functions/create-wireguard-peer/**"
+      - "supabase/migrations/**"
+      - ".github/workflows/android-apk.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "android-app/**"
+      - "botnix/wireguard-control-api/**"
+      - "supabase/functions/create-wireguard-peer/**"
+      - "supabase/migrations/**"
+      - ".github/workflows/android-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VPN_RELEASE_KEYSTORE_BASE64: ${{ secrets.VPN_RELEASE_KEYSTORE_BASE64 }}
+      VPN_RELEASE_STORE_PASSWORD: ${{ secrets.VPN_RELEASE_STORE_PASSWORD }}
+      VPN_RELEASE_KEY_ALIAS: ${{ secrets.VPN_RELEASE_KEY_ALIAS }}
+      VPN_RELEASE_KEY_PASSWORD: ${{ secrets.VPN_RELEASE_KEY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+      - name: Validate WireGuard provisioning function
+        run: |
+          deno lint --config supabase/functions/deno.json supabase/functions/create-wireguard-peer/index.ts
+          deno check --config supabase/functions/deno.json supabase/functions/create-wireguard-peer/index.ts
+      - name: Validate Botnix peer API syntax
+        run: |
+          python -m py_compile botnix/wireguard-control-api/server.py
+          bash -n botnix/wireguard-control-api/install.sh
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Build debug APK
+        working-directory: android-app
+        run: gradle assembleDebug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: jb-pocket-vpn-debug-apk
+          path: android-app/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Prepare release signing key
+        if: ${{ env.VPN_RELEASE_KEYSTORE_BASE64 != '' && env.VPN_RELEASE_STORE_PASSWORD != '' && env.VPN_RELEASE_KEY_ALIAS != '' && env.VPN_RELEASE_KEY_PASSWORD != '' }}
+        run: |
+          echo "$VPN_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vpn-release.jks"
+      - name: Build signed release APK
+        if: ${{ env.VPN_RELEASE_KEYSTORE_BASE64 != '' && env.VPN_RELEASE_STORE_PASSWORD != '' && env.VPN_RELEASE_KEY_ALIAS != '' && env.VPN_RELEASE_KEY_PASSWORD != '' }}
+        working-directory: android-app
+        env:
+          VPN_RELEASE_STORE_FILE: ${{ runner.temp }}/vpn-release.jks
+        run: gradle assembleRelease
+      - name: Upload signed release APK
+        if: ${{ env.VPN_RELEASE_KEYSTORE_BASE64 != '' && env.VPN_RELEASE_STORE_PASSWORD != '' && env.VPN_RELEASE_KEY_ALIAS != '' && env.VPN_RELEASE_KEY_PASSWORD != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jb-pocket-vpn-signed-release-apk
+          path: android-app/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

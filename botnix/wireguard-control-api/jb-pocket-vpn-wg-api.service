@@ -1,0 +1,21 @@
+[Unit]
+Description=JB Pocket VPN WireGuard peer provisioning API
+After=network-online.target wg-quick@wg0.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+EnvironmentFile=/etc/jb-pocket-vpn/wg-api.env
+ExecStart=/usr/bin/python3 /opt/jb-pocket-vpn-wg-api/server.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=false
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/etc/wireguard /var/lib/jb-pocket-vpn
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
