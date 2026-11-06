@@ -20,7 +20,7 @@
 - [ ] Add admin payments, refunds, reconciliation, and revenue reporting modules.
 - [ ] Add AdMob SDK using test ad units; configure production IDs after AdMob app registration.
 - [ ] Implement and verify AdMob rewarded-ad server-side verification (SSV), signature validation, replay protection, and daily reward caps before enabling rewards.
-- [ ] Add AdSense publisher integration and ads.txt after domain ownership and publisher ID are supplied and Google approves the site.
+- [x] Add conditional AdSense publisher-script loader; it stays disabled until the owner configures a valid publisher ID.\n- [ ] Complete AdSense site review, ads.txt, and responsive ad placements after domain ownership and publisher ID are supplied and Google approves the site.
 - [ ] Deploy existing admin app on a dedicated admin hostname and verify server-side role protection.
 - [ ] Complete automatic Android authentication and WireGuard peer provisioning; enforce paid-plan entitlements and Free quota in the VPN data plane.
 - [ ] Run payment, webhook, ad SSV, DNS/routing, leak, reconnect, expiry, and Android real-device tests before production release.
