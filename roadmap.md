@@ -15,7 +15,7 @@
 
 ## Implementation tasks
 - [x] Add server-side PhonePe Standard Checkout order-creation scaffold (UAT/production host selection, authenticated customer, database-derived plan amount, pending order row, OAuth token, hosted checkout URL).\n- [ ] Deploy/configure the PhonePe order-creation function and test against merchant UAT credentials.\n- [ ] Replace manual UPI/UTR flow with the verified PhonePe checkout flow.
-- [ ] Add server-side PhonePe order creation, status verification, authenticated webhook processing, idempotency, and refund/reconciliation records.
+- [x] Add authenticated server-side PhonePe order-status verification and atomic, idempotent subscription activation; deploy `verify-phonepe-payment` with JWT verification enabled.\n- [ ] Confirm webhook authentication against the merchant dashboard configuration and connect it to the same activation routine.\n- [ ] Connect the website plan button and payment-return UI to order creation and status verification.
 - [ ] Configure PhonePe UAT secrets in Supabase; production secrets only after UAT approval.
 - [ ] Add admin payments, refunds, reconciliation, and revenue reporting modules.
 - [ ] Add AdMob SDK using test ad units; configure production IDs after AdMob app registration.
