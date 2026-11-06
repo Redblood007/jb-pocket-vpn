@@ -27,14 +27,14 @@ const adminDb = () => createClient(
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 
-async function getPhonePeToken(base: string) {
+async function getPhonePeToken() {
   const form = new URLSearchParams({
     client_id: requiredEnv("PHONEPE_CLIENT_ID"),
     client_version: requiredEnv("PHONEPE_CLIENT_VERSION"),
     client_secret: requiredEnv("PHONEPE_CLIENT_SECRET"),
     grant_type: "client_credentials",
   });
-  const response = await fetch(`${base}/v1/oauth/token`, {
+  const tokenUrl = requiredEnv("PHONEPE_ENV") === "UAT"\n    ? "https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token"\n    : "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";\n  const response = await fetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: form,
@@ -123,7 +123,7 @@ Deno.serve(async (req: Request) => {
     createdOrderId = order.id;
 
     const base = phonePeBase();
-    const token = await getPhonePeToken(base);
+    const token = await getPhonePeToken();
     const appOrigin = requiredEnv("APP_ORIGIN").replace(/\/$/, "");
     const response = await fetch(`${base}/checkout/v2/pay`, {
       method: "POST",
