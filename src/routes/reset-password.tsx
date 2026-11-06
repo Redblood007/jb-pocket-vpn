@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Choose a New Password — JB Pocket VPN" }] }),
+  head: () => ({ meta: [{ title: "Choose a New Password — JB Pocket VPN" }, { name: "description", content: "Set a new password for your JB Pocket VPN account." }, { property: "og:title", content: "Choose a New Password — JB Pocket VPN" }, { property: "og:description", content: "Set a new password for your JB Pocket VPN account." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: ResetPassword,
 });
 

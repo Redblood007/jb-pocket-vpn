@@ -130,6 +130,30 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_settings: {
+        Row: {
+          daily_reward_limit: number
+          data_per_ad_mb: number
+          id: boolean
+          rewards_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          daily_reward_limit?: number
+          data_per_ad_mb?: number
+          id?: boolean
+          rewards_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          daily_reward_limit?: number
+          data_per_ad_mb?: number
+          id?: boolean
+          rewards_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

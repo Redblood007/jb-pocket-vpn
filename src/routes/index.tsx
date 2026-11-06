@@ -12,6 +12,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "JB Pocket VPN — Your Privacy, Our Priority" },
       { property: "og:description", content: "Private browsing, simple plans, and secure connectivity." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#050b1b" },
     ],
   }),

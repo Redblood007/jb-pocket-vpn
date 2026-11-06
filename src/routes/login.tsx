@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Customer Login — JB Pocket VPN" }] }),
+  head: () => ({ meta: [{ title: "Customer Login — JB Pocket VPN" }, { name: "description", content: "Sign in to your JB Pocket VPN customer account." }, { property: "og:title", content: "Customer Login — JB Pocket VPN" }, { property: "og:description", content: "Sign in to your JB Pocket VPN customer account." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: CustomerLogin,
 });
 

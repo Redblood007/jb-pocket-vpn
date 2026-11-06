@@ -8,7 +8,7 @@ export const Route = createFileRoute("/account")({
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/login" });
   },
-  head: () => ({ meta: [{ title: "My Account — JB Pocket VPN" }] }),
+  head: () => ({ meta: [{ title: "My Account — JB Pocket VPN" }, { name: "description", content: "Manage your JB Pocket VPN customer profile." }, { property: "og:title", content: "My Account — JB Pocket VPN" }, { property: "og:description", content: "Manage your JB Pocket VPN customer profile." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: CustomerAccount,
 });
 

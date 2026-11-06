@@ -6,6 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { RewardSettingsPanel } from "@/components/reward-settings-panel";
 import {
   listAdminData,
   createCustomer,
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin")({
 });
 
 function AdminPage() {
-  const [tab, setTab] = useState<"customers" | "plans">("customers");
+  const [tab, setTab] = useState<"customers" | "plans" | "rewards">("customers");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchAdminData = useServerFn(listAdminData);
@@ -95,18 +97,19 @@ function AdminPage() {
     <div className="min-h-screen bg-background font-sans text-foreground">
       <Toaster />
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <span className="font-display text-lg font-bold">🛡️ ShieldX <span className="text-primary">Admin</span></span>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setTab("customers")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "customers" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => setTab("customers")} variant={tab === "customers" ? "default" : "outline"}>
               Customers ({customers.length})
-            </button>
-            <button onClick={() => setTab("plans")} className={`rounded-full px-4 py-2 text-sm font-medium ${tab === "plans" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:bg-secondary"}`}>
+            </Button>
+            <Button onClick={() => setTab("plans")} variant={tab === "plans" ? "default" : "outline"}>
               Plans
-            </button>
-            <button onClick={handleSignOut} className="rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-secondary">
+            </Button>
+            <Button onClick={() => setTab("rewards")} variant={tab === "rewards" ? "default" : "outline"}>Ad rewards</Button>
+            <Button onClick={handleSignOut} variant="outline">
               Logout
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -121,8 +124,10 @@ function AdminPage() {
             onDelete={(id) => removeCustomer.mutate({ data: { id } })}
             onToggle={(id, active) => toggleActive.mutate({ data: { id, active } })}
           />
-        ) : (
+        ) : tab === "plans" ? (
           <PlansTab plans={plans} onSave={(p) => savePlan.mutate({ data: p })} />
+        ) : (
+          <RewardSettingsPanel />
         )}
         <ChangePasswordCard />
       </main>
