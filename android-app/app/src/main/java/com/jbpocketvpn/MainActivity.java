@@ -33,6 +33,7 @@ public final class MainActivity extends Activity {
     private String tunnelName = "JB Pocket VPN";
     private String selectedServer = "India – Mumbai";
     private String selectedFlag = "🇮🇳";
+    private String currentPage = "Home";
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -81,11 +82,12 @@ public final class MainActivity extends Activity {
     }
 
     private void buildUi() {
+        if (!"Home".equals(currentPage)) { buildFeaturePage(); return; }
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setBackgroundColor(BG);
         LinearLayout root = column(); root.setPadding(dp(18),dp(22),dp(18),dp(20)); scroll.addView(root);
 
         LinearLayout header = row();
-        TextView menu = txt("☰",25,Color.WHITE,true); menu.setGravity(Gravity.CENTER); header.addView(menu,lp(34,48));
+        TextView menu = txt("☰",25,Color.WHITE,true); menu.setGravity(Gravity.CENTER); header.addView(menu,lp(34,48)); menu.setOnClickListener(v -> showNavigation());
         TextView shield = txt("♛\nJK",17,Color.WHITE,true); shield.setGravity(Gravity.CENTER);
         shield.setBackground(gradient(Color.rgb(92,37,160),Color.rgb(35,17,75),15,PURPLE));
         LinearLayout.LayoutParams sh=lp(52,56); sh.leftMargin=dp(7); header.addView(shield,sh);
@@ -136,6 +138,9 @@ public final class MainActivity extends Activity {
         TextView free=actionTile("ϟ","Free Plan","100 MB / Day");
         TextView pro=actionTile("♛","Premium","Unlimited");
         TextView reward=actionTile("🎁","Earn Reward","Watch & Earn");
+        free.setOnClickListener(v -> openPage("Free Plan"));
+        pro.setOnClickListener(v -> openPage("Premium"));
+        reward.setOnClickListener(v -> openPage("Rewards"));
         LinearLayout.LayoutParams tile=new LinearLayout.LayoutParams(0,dp(100),1); tile.setMargins(dp(3),0,dp(3),0);
         plans.addView(free,tile); plans.addView(pro,tile); plans.addView(reward,tile); root.addView(plans);
 
@@ -156,6 +161,80 @@ public final class MainActivity extends Activity {
         for(int i=0;i<navs.length;i++){ TextView n=txt(navs[i],12,i==0?Color.rgb(204,140,255):MUTED,true); n.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(54),1); nav.addView(n,p); }
         root.addView(nav,lp(-1,74));
+        setContentView(scroll);
+    }
+
+
+    private void openPage(String page) { currentPage=page; buildUi(); }
+    @Override public void onBackPressed() {
+        if (!"Home".equals(currentPage)) { currentPage="Home"; buildUi(); }
+        else super.onBackPressed();
+    }
+    private void showNavigation() {
+        String[] pages={"Home","Servers","Premium","Rewards","Profile","Settings","Help & Support","About"};
+        new AlertDialog.Builder(this).setTitle("JK Pocket VPN").setItems(pages,(d,i)->{
+            if ("Servers".equals(pages[i])) chooseServer(); else openPage(pages[i]);
+        }).show();
+    }
+    private void addPageButton(LinearLayout root,String label,Runnable action) {
+        TextView b=txt(label+"    ›",15,Color.WHITE,true); b.setPadding(dp(16),dp(15),dp(12),dp(15));
+        b.setBackground(shape(PANEL,16,Color.rgb(79,48,116)));
+        LinearLayout.LayoutParams p=lp(-1,-2); p.bottomMargin=dp(9); root.addView(b,p);
+        b.setOnClickListener(v->action.run());
+    }
+    private void buildFeaturePage() {
+        ScrollView scroll=new ScrollView(this); scroll.setBackgroundColor(BG);
+        LinearLayout root=column(); root.setPadding(dp(18),dp(22),dp(18),dp(24)); scroll.addView(root);
+        LinearLayout header=row();
+        TextView back=txt("‹",32,Color.WHITE,true); header.addView(back,lp(42,48)); back.setOnClickListener(v->{currentPage="Home";buildUi();});
+        TextView title=txt(currentPage,21,Color.WHITE,true); header.addView(title);
+        root.addView(header,lp(-1,56)); gap(root,12);
+        switch(currentPage) {
+            case "Servers":
+                root.addView(txt("Choose your VPN location",17,Color.WHITE,true)); gap(root,10);
+                String[] locations={"🇮🇳  India – Mumbai","🇮🇳  India – Delhi","🇸🇬  Singapore","🇩🇪  Germany","🇺🇸  United States","🇬🇧  United Kingdom"};
+                for(String location:locations) addPageButton(root,location,()->{
+                    selectedServer=location.substring(4); selectedFlag=location.substring(0,4).trim();
+                    currentPage="Home";buildUi(); Toast.makeText(this,"Selected "+selectedServer+". Import a matching server profile to connect.",Toast.LENGTH_LONG).show();
+                });
+                break;
+            case "Premium":
+                root.addView(txt("Upgrade your VPN experience",18,Color.WHITE,true));
+                root.addView(txt("Plan selection preview. Payments are not enabled in this app build.",13,MUTED,false)); gap(root,12);
+                for(String plan:new String[]{"7 Days  •  ₹49","30 Days  •  ₹149","90 Days  •  ₹399","365 Days  •  ₹1,299"}) addPageButton(root,plan,()->openPage("Payment"));
+                break;
+            case "Payment":
+                root.addView(txt("Payment methods",18,Color.WHITE,true)); gap(root,10);
+                for(String method:new String[]{"UPI / PhonePe / Google Pay","Paytm","Card / Net Banking"}) addPageButton(root,method,()->new AlertDialog.Builder(this).setTitle("Payment not enabled").setMessage("The payment gateway is not connected yet. No payment has been taken.").setPositiveButton("OK",null).show());
+                break;
+            case "Profile":
+                root.addView(txt("Your account",18,Color.WHITE,true)); gap(root,8);
+                root.addView(txt("Sign-in and account sync will be added after the core VPN connection is verified.",13,MUTED,false)); gap(root,10);
+                addPageButton(root,"Subscription",()->openPage("Premium"));
+                addPageButton(root,"Settings",()->openPage("Settings"));
+                addPageButton(root,"Help & Support",()->openPage("Help & Support"));
+                break;
+            case "Settings":
+                root.addView(txt("App preferences",18,Color.WHITE,true)); gap(root,10);
+                for(String setting:new String[]{"Auto Connect","Notifications","Dark Theme","App Information"}) addPageButton(root,setting,()->new AlertDialog.Builder(this).setTitle(setting).setMessage("This setting is a UI placeholder and is not active yet.").setPositiveButton("OK",null).show());
+                break;
+            case "Rewards":
+            case "Free Plan":
+                root.addView(txt("Free plan",18,Color.WHITE,true));
+                root.addView(txt("The 100 MB daily quota is not enforced yet. Usage and reward systems are not active.",13,MUTED,false)); gap(root,12);
+                addPageButton(root,"View Premium Plans",()->openPage("Premium"));
+                break;
+            case "Help & Support":
+                root.addView(txt("Help & Support",18,Color.WHITE,true)); gap(root,10);
+                for(String topic:new String[]{"How to import a WireGuard profile","VPN connection troubleshooting","Contact support"}) addPageButton(root,topic,()->new AlertDialog.Builder(this).setTitle(topic).setMessage("Support content will be added in a later update.").setPositiveButton("OK",null).show());
+                break;
+            default:
+                root.addView(txt("JK Pocket VPN Ultra Premium",18,Color.WHITE,true));
+                root.addView(txt("Native Android WireGuard client. Import a valid .conf profile on the Home screen to connect.",13,MUTED,false));
+        }
+        gap(root,16);
+        TextView home=txt("←  Back to Dashboard",14,Color.rgb(207,157,255),true); home.setGravity(Gravity.CENTER);
+        root.addView(home,lp(-1,52)); home.setOnClickListener(v->{currentPage="Home";buildUi();});
         setContentView(scroll);
     }
 
